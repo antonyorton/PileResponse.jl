@@ -1,3 +1,3 @@
 # PileResponse
 
-[![Build Status](https://github.com/antonyorton/PileResponse.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/antonyorton/PileResponse.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+A Julia package for the assessment of pile head response under axial load based on the results of a single geotechnical cone penetration test (CPT).
