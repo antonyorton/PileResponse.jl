@@ -33,7 +33,7 @@ include("functions.jl")
 
 
 function helloworld()
-    print("Hi there PileResponse.js world, let's see.\n")
+    print("Hi there PileResponse.js world, let's see if it works.\n")
     return 123
 end
 
