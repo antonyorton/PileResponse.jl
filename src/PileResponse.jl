@@ -1,16 +1,39 @@
 module PileResponse
 
 export
-    helloworld,
-    square,
-    smooth_data
+    get_least_squares_interpolator,
+    show_table,
+    get_pile_head_displacement,
+    get_initial_pile_head_stiffness,
+    get_soil_type_CPT2012,
+    get_kc_base_CPT2012,
+    get_ultimate_shaft_resistance,
+    get_fsmax_shaft_CPT2012,
+    get_alpha_shaft_CPT2012,
+    get_fsol_shaft_CPT2012,
+    get_average_qc_at_pile_base,
+    get_E0,
+    get_Vs,
+    get_Ic,
+    get_bigQt,
+    get_Fr,
+    get_Rf,
+    get_qn,
+    get_qt,
+    get_sigmav0_effective,
+    get_sigmav0_total,
+    read_delimited_text_file,
+    helloworld
+
 
 
 include("functions.jl")
 
 
+
+
 function helloworld()
-    print("Hi there PileResponse.js world, let's do this again.\n")
+    print("Hi there PileResponse.js world, let's see.\n")
     return 123
 end
 
