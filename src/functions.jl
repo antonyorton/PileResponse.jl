@@ -308,17 +308,17 @@ end
 
 
 """
-	get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\n
+	get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\n
 	returns `(αᵥₛ * qn / pa)^0.5`
 		where `αᵥₛ = 10^(0.55 * Ic + 1.68)`
 `gw_depth` is depth to groundwater in metres\\
 `gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
 `a` is the net area ratio of the cone, typically between 0.70 and 0.85\\
 """
-function get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+function get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     pa = 0.101 #atmospheric pressure (MPa)
     qn = get_qn(depth_m, qc_MPa, u2_MPa, gamma=gamma, a=a)
-    Ic = get_Ic(depth_m, qc_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
+    Ic = get_Ic(depth_m, qc_MPa, fs_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
     αvs = 10.0 .^ (0.55 .* Ic .+ 1.68)
     return (αvs .* qn / pa) .^ 0.5
 end
