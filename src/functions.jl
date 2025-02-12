@@ -362,7 +362,7 @@ end
 
 
 """
-	function get_Fr(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
+	function get_Fr(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64},u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
 	returns `(fₛ / qₙ) * 100`
 `a` is the net area ratio of the cone, typically between 0.70 and 0.85
 `gamma` is soil unit weight in kN/m², assumed constant over `depth_m`
