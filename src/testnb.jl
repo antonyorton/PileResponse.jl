@@ -5,7 +5,6 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ d27efcff-916b-44f8-ad8f-4d8d08ae780e
-# ╠═╡ show_logs = false
 begin
     import Pkg
     # activate a temporary environment
@@ -88,7 +87,7 @@ end
 
 # ╔═╡ 3c438add-3c28-41b1-824b-4e15c8b70f7d
 begin
-	Ic = prs.get_Ic(depth_m, qc_MPa, u2_MPa, groundwater_depth, gamma = gamma_soil, a = 0.73)
+	Ic = prs.get_Ic(depth_m, qc_MPa, fs_MPa, u2_MPa, groundwater_depth, gamma = gamma_soil, a = 0.73)
 end
 
 # ╔═╡ 013214c8-4475-4b92-8149-31f6dee0b7dd

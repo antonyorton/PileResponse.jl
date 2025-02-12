@@ -325,15 +325,16 @@ end
 
 
 """
-	get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
+	get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64},
+    fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
 	returns `[(3.47 - log10(Qt))² + (log10(Fr) + 1.22)²]^0.5`
 `gw_depth` is depth to groundwater in metres\\
 `gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
 `a` is the net area ratio of the cone, typically between 0.70 and 0.85
 """
-function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     Qt = get_bigQt(depth_m, qc_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
-    Fr = get_Fr(depth_m, qc_MPa, u2_MPa, gamma=gamma, a=a)
+    Fr = get_Fr(depth_m, qc_MPa, fs_MPa, u2_MPa, gamma=gamma, a=a)
     Fr[Fr.<0] .= 0.0
     Qt[Qt.<0] .= 0.0
     Ic = ((3.47 .- log10.(Qt)) .^ 2 .+ (log10.(Fr) .+ 1.22) .^ 2) .^ 0.5
