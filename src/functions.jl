@@ -268,8 +268,8 @@ end
 
 
 """
-	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_toe_depth::Float64, pile_diameter::Float64; scale_to_30pct::Bool = false)\n
-	Returns average qc within +/- 1.5 pile diameters from the toe, with values scaled to within +/- 30% of the value at the toe
+	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_toe_depth::Float64, pile_diameter::Float64; clip_to_30pct::Bool = false)\n
+	Returns average qc within +/- 1.5 pile diameters from the toe, with values limited to within +/- 30% of the value at the toe
 
 if `clip_to_30pct` = `false`, values will not be scaled to +/- 30% of the value at the toe prior to averaging
 """
