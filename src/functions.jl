@@ -1,6 +1,7 @@
 using DataInterpolations
 using DelimitedFiles
 using LsqFit
+using Statistics
 
 
 """
