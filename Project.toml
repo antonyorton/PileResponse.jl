@@ -8,12 +8,14 @@ DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 DataInterpolations = "7.2.0"
 DelimitedFiles = "1.9.1"
 LsqFit = "0.15.0"
 PrettyTables = "2.4.0"
+Statistics = "1.11.1"
 julia = "1.6.7"
 
 [extras]
