@@ -41,7 +41,7 @@ md"""---------------------
 """
 
 # ╔═╡ 4d319fda-a82a-483b-a780-1874cf00c181
-cptfilename = "../data/example_cpt_data.csv"
+cptfilename = "../data/example_cpt_data.csv";
 
 # ╔═╡ 02af09f4-db32-408f-9283-6fc77d12d792
 data = prs.read_delimited_text_file(cptfilename, delim=',');
@@ -119,7 +119,7 @@ md"""Plot the derived results"""
 
 # ╔═╡ 40c4b45a-d2ed-422b-b76e-2f3aa83b624b
 md"""-----------------
-### Pile ultimate load
+### Pile details
 """
 
 # ╔═╡ 1669ec82-23f0-48b2-85b1-3cadeb2c9f94
@@ -139,14 +139,15 @@ md"Select the pile type"
 # ╔═╡ 60a91466-170a-4d11-a412-26be9ba590d0
 @bind pile_type Select(sort(collect(keys(prs.get_alpha_shaft_CPT2012()))))
 
+# ╔═╡ f3e79011-4d3d-4fe4-93b0-2b0bab5eea6f
+md"---------------------
+#### Ultimate shaft load"
+
 # ╔═╡ a68d325a-bfe1-40dc-90a9-40eedb5f3701
 md"""Get the soil types for the CPT2012 method (Frank, 2017)"""
 
 # ╔═╡ 4ee315b6-edbe-4197-873d-c69f804870c2
 soil_type_CPT2012 = prs.get_soil_type_CPT2012(Ic);
-
-# ╔═╡ f3e79011-4d3d-4fe4-93b0-2b0bab5eea6f
-md" #### Ultimate shaft load"
 
 # ╔═╡ e94bd027-e536-44ff-9bc8-a22d7d40f4e0
 md"Get the ultimate shaft resistance (MPa) for each node"
@@ -159,12 +160,12 @@ md"Calulate the ultimate shaft load (MN) for the pile"
 
 # ╔═╡ 5a322c8e-01e7-426f-93e3-ee98c6efb008
 begin
-	sum = 0.0; depth = 0.0; count = 1; #initial values
+	sum = 0.0; depth = 0.0; count = 1;
 	while depth < pile_toe_depth
-		#increment the sum for each shaft element
+		
 		sum += pi * pile_diameter * (depth_m[count + 1] - depth_m[count]) *
 			0.5 * (fshaft_MPa[count + 1] + fshaft_MPa[count])
-		#update the current depth and the count
+		
 		depth = depth_m[count + 1]
 		count += 1
 	end
@@ -175,10 +176,8 @@ end;
 md"The ultimate shaft load is **$(round(ult_shaft_MN, digits = 3)) (MN)**"
 
 # ╔═╡ c0291985-31f2-42d7-b704-57a814bf79fd
-md" #### Ultimate base load"
-
-# ╔═╡ ed194582-d9dc-429e-8c90-51f5ff1dd70e
-
+md"--------------------
+#### Ultimate base load"
 
 # ╔═╡ 9b13cd35-23c4-47fd-99c6-6bb0c1465dd4
 md"Get the kc values for the selected pile type"
@@ -193,10 +192,45 @@ md"Then for the soil type at the base of the pile"
 kc_at_base = kc[soil_type_CPT2012[depth_m .== pile_toe_depth]][1]
 
 # ╔═╡ 3a1328fb-4435-4589-b6e1-9117823bc92f
-md"Get the average qc value within +/- 1.5 diameters of the pile base"
+md"Get the average qc value within 1.5 diameters of the pile base"
 
 # ╔═╡ b40eb8ce-7524-46bd-988d-34251ef78d0c
 qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_toe_depth, pile_diameter, clip_to_30pct = false)
+
+# ╔═╡ 1fd7e0cd-05a5-4fa9-bb53-a657a384d04c
+md"The ultimate base load (MN) is then ``q_{c(avg)} \cdot k_{c}``"
+
+# ╔═╡ 51d28aa2-c59b-4165-b75b-f82ebf7359d0
+ult_base_MN = qc_avg_base * kc_at_base * pi * pile_diameter ^ 2 / 4;
+
+# ╔═╡ e1136fc9-d88a-4a2f-8503-2b47dd0e0eaf
+md"The ultimate base load is **$(round(ult_base_MN, digits = 3)) (MN)**"
+
+# ╔═╡ 08304a65-5440-4232-900b-6db2b2ffbde1
+md"-----------------------
+#### Ultimate load
+"
+
+# ╔═╡ 2175460a-fe25-4f94-8878-d26475b5b1d7
+md"The pile ultimate load is **$(round(ult_base_MN + ult_shaft_MN, digits = 3)) (MN)**"
+
+# ╔═╡ 27fc31b2-54cd-46e5-9197-db83b7103aaa
+
+
+# ╔═╡ 62529209-cd12-4b86-a11a-40ae30edd10a
+
+
+# ╔═╡ e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
+
+
+# ╔═╡ 90225873-19cf-4d0f-994f-e8c071dd676e
+
+
+# ╔═╡ 044fc861-23cb-41de-9072-17878ea79f59
+
+
+# ╔═╡ 71c7b8e2-113b-47e8-88b5-4b39269de1a9
+
 
 # ╔═╡ 57d3efc5-531b-43f1-a859-e6f11a0c266b
 md"---------------------
@@ -287,22 +321,32 @@ figIc
 # ╠═feb3b2e6-5804-4234-b59e-35ae9372a5bd
 # ╟─6122e0d1-78e7-432e-822f-45f67dda3583
 # ╟─60a91466-170a-4d11-a412-26be9ba590d0
+# ╟─f3e79011-4d3d-4fe4-93b0-2b0bab5eea6f
 # ╟─a68d325a-bfe1-40dc-90a9-40eedb5f3701
 # ╠═4ee315b6-edbe-4197-873d-c69f804870c2
-# ╟─f3e79011-4d3d-4fe4-93b0-2b0bab5eea6f
 # ╟─e94bd027-e536-44ff-9bc8-a22d7d40f4e0
 # ╠═b6ae3d81-38cb-4a80-9219-3833d4463666
 # ╟─b95a595e-1c89-4a31-9738-1e4bc5ad4c76
 # ╠═5a322c8e-01e7-426f-93e3-ee98c6efb008
 # ╟─a20911f8-4211-40ad-8600-4731bf4db194
 # ╟─c0291985-31f2-42d7-b704-57a814bf79fd
-# ╠═ed194582-d9dc-429e-8c90-51f5ff1dd70e
 # ╟─9b13cd35-23c4-47fd-99c6-6bb0c1465dd4
 # ╠═17271f9f-2304-40f6-b18d-3a0e2f15a3fc
 # ╟─15071d39-4f92-4150-9e19-89515174a9e8
 # ╟─f1b72e6b-35eb-4729-a337-10293db44411
-# ╠═3a1328fb-4435-4589-b6e1-9117823bc92f
+# ╟─3a1328fb-4435-4589-b6e1-9117823bc92f
 # ╠═b40eb8ce-7524-46bd-988d-34251ef78d0c
+# ╟─1fd7e0cd-05a5-4fa9-bb53-a657a384d04c
+# ╠═51d28aa2-c59b-4165-b75b-f82ebf7359d0
+# ╟─e1136fc9-d88a-4a2f-8503-2b47dd0e0eaf
+# ╟─08304a65-5440-4232-900b-6db2b2ffbde1
+# ╟─2175460a-fe25-4f94-8878-d26475b5b1d7
+# ╠═27fc31b2-54cd-46e5-9197-db83b7103aaa
+# ╠═62529209-cd12-4b86-a11a-40ae30edd10a
+# ╠═e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
+# ╠═90225873-19cf-4d0f-994f-e8c071dd676e
+# ╠═044fc861-23cb-41de-9072-17878ea79f59
+# ╠═71c7b8e2-113b-47e8-88b5-4b39269de1a9
 # ╟─57d3efc5-531b-43f1-a859-e6f11a0c266b
 # ╠═c6730ab0-4669-4ff4-9658-df539fe4169d
 # ╠═48366eb0-8138-4719-a0dd-e9370d9cb806

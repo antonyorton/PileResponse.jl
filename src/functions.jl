@@ -66,20 +66,19 @@ end
 
 
 """
-	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64 = 0.3)\n
+	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Int64, Esoil_Lon2::Int64; ν::Float64 = 0.3)\n
 
-	Returns the initial, or small strain, pile head stiffness
+	Returns the initial, or small strain, pile head stiffness (MN/m)
 
 The theory is based on the closed form elastic solution provided by Randolph and Wroth (1978), *Analysis of deformations of vertically loaded piles.*\n
 The theory assumes that the soil has a linearly increasing elastic modulus with depth.
 
-`Epile` is the elastic modulus of the pile\\
-`Esoil_L` is the small strain (E₀) elastic modulus of the soil at the base of the pile shaft\\
-`Esoil_Lon2` is the small strain (E₀) elastic modulus of the soil at the midpoint of the pile shaft\\
+`Epile (MPa)` is the elastic modulus of the pile\\
+`Esoil_L (MPa)` is the small strain (E₀) elastic modulus of the soil at the base of the pile shaft\\
+`Esoil_Lon2 (MPa)` is the small strain (E₀) elastic modulus of the soil at the midpoint of the pile shaft\\
 `ν` (input as \\nu[tab]) is the Poisson's ratio of the soil
-
 """
-function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64=0.3)
+function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Int64, Esoil_Lon2::Int64; ν::Float64=0.3)
 
     L = pile_length
     G_L = Esoil_L / 2 / (1 + ν)
@@ -91,8 +90,18 @@ function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Fl
     λ = Epile / G_L
     μL = sqrt(2 * L^2 / (ζ * λ * r₀^2))
 
+    # print("rho = ", ρ, "\n")
+    # print("zeta = ", ζ, "\n")
+    # print("lambda = ", λ, "\n")
+    # print("ul = ", μL, "\n")
+
     numerator = 4 / (1 - ν) + 2 * pi * ρ * L * tanh(μL) / (ζ * r₀ * μL)
     denominator = 1 + 4 / (1 - ν) * L * tanh(μL) / (pi * λ * r₀ * μL)
+
+    # print("numerator = ", numerator, "\n")
+    # print("denominator = ", denominator, "\n")
+    # print("G_Lr0 = ", G_L * r₀, "\n")
+
     k0 = G_L * r₀ * numerator / denominator #Pile head stiffness (MN / m)
 
     return k0
