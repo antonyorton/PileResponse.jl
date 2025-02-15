@@ -148,7 +148,7 @@ soil_type_CPT2012 = prs.get_soil_type_CPT2012(Ic);
 md"Get the ultimate shaft resistance (MPa) for each node"
 
 # ╔═╡ b6ae3d81-38cb-4a80-9219-3833d4463666
-fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor = 1.0)
+fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor = 1.0);
 
 # ╔═╡ b95a595e-1c89-4a31-9738-1e4bc5ad4c76
 md"Calulate the ultimate shaft load (MN) for the pile"
@@ -189,29 +189,47 @@ md"-----------------------
 #### Ultimate load
 "
 
+# ╔═╡ 2da912f1-4330-4bef-a662-1bd482b8ea11
+pile_ult_load = ult_base_MN + ult_shaft_MN;
+
 # ╔═╡ 2175460a-fe25-4f94-8878-d26475b5b1d7
-md"The pile ultimate load is **$(round(ult_base_MN + ult_shaft_MN, digits = 3)) (MN)**"
+md"The pile ultimate load is **$(round(pile_ult_load, digits = 3)) (MN)**"
 
 # ╔═╡ 27fc31b2-54cd-46e5-9197-db83b7103aaa
 md"-----------------------
-#### Pile laod displacement response
+#### Pile load displacement response
 "
 
+# ╔═╡ 4044fcf1-833d-4c35-810a-63d72453bd06
+md"""Nominate a set of increasing pile head loads"""
+
+# ╔═╡ 98d352d1-9130-4356-89bc-1402b8ea67e0
+pile_head_loads = 0.01:0.001:0.90*pile_ult_load;
+
+# ╔═╡ 2bcabf18-87fb-49b2-956f-916a2a304200
+md"""First we get the initial pile head stiffness ``k_{0}`` (MN/m) following the closed form solution of Randolph and Wroth (1978)"""
+
+# ╔═╡ 382b2e31-e360-4a58-9f00-b43e40e62b6e
+E_L = fun_E0_linear(pile_toe_depth)
+
+# ╔═╡ bdf90bbe-5792-4b68-b4fc-f91d77ee00af
+E_Lon2 = fun_E0_linear(pile_toe_depth / 2)
+
 # ╔═╡ 62529209-cd12-4b86-a11a-40ae30edd10a
-begin
-	E_L = fun_E0_linear(pile_toe_depth)
-	E_Lon2 = fun_E0_linear(pile_toe_depth / 2)
-	k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν = Poisson_ratio)
-end;
+k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν = Poisson_ratio)
 
 # ╔═╡ e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
+md"""Then we get the pile head displacement adopting the relationship
 
+``k = k_{0}\cdot(1 - (P/P_{ult})^{0.3})``
+
+"""
 
 # ╔═╡ 90225873-19cf-4d0f-994f-e8c071dd676e
-
+displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
 
 # ╔═╡ 044fc861-23cb-41de-9072-17878ea79f59
-
+prs.show_table([pile_head_loads, displacement], ["Load (MN)", "Disp (m)"],num_rows = 15)
 
 # ╔═╡ 71c7b8e2-113b-47e8-88b5-4b39269de1a9
 
@@ -321,11 +339,17 @@ figIc
 # ╟─1fd7e0cd-05a5-4fa9-bb53-a657a384d04c
 # ╠═51d28aa2-c59b-4165-b75b-f82ebf7359d0
 # ╟─e1136fc9-d88a-4a2f-8503-2b47dd0e0eaf
-# ╠═08304a65-5440-4232-900b-6db2b2ffbde1
+# ╟─08304a65-5440-4232-900b-6db2b2ffbde1
+# ╠═2da912f1-4330-4bef-a662-1bd482b8ea11
 # ╟─2175460a-fe25-4f94-8878-d26475b5b1d7
 # ╟─27fc31b2-54cd-46e5-9197-db83b7103aaa
+# ╟─4044fcf1-833d-4c35-810a-63d72453bd06
+# ╠═98d352d1-9130-4356-89bc-1402b8ea67e0
+# ╟─2bcabf18-87fb-49b2-956f-916a2a304200
+# ╠═382b2e31-e360-4a58-9f00-b43e40e62b6e
+# ╠═bdf90bbe-5792-4b68-b4fc-f91d77ee00af
 # ╠═62529209-cd12-4b86-a11a-40ae30edd10a
-# ╠═e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
+# ╟─e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
 # ╠═90225873-19cf-4d0f-994f-e8c071dd676e
 # ╠═044fc861-23cb-41de-9072-17878ea79f59
 # ╠═71c7b8e2-113b-47e8-88b5-4b39269de1a9
