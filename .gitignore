@@ -2,3 +2,4 @@
 src/MyTemp.jl
 example_notebook.jl
 how-to-import-unreg.txt
+docs/build/

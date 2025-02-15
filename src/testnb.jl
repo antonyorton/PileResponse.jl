@@ -197,7 +197,7 @@ md"The pile ultimate load is **$(round(pile_ult_load, digits = 3)) (MN)**"
 
 # ╔═╡ 27fc31b2-54cd-46e5-9197-db83b7103aaa
 md"-----------------------
-#### Pile load displacement response
+### Pile load displacement response
 "
 
 # ╔═╡ 4044fcf1-833d-4c35-810a-63d72453bd06
@@ -210,16 +210,16 @@ pile_head_loads = 0.01:0.001:0.90*pile_ult_load;
 md"""First we get the initial pile head stiffness ``k_{0}`` (MN/m) following the closed form solution of Randolph and Wroth (1978)"""
 
 # ╔═╡ 382b2e31-e360-4a58-9f00-b43e40e62b6e
-E_L = fun_E0_linear(pile_toe_depth)
+E_L = fun_E0_linear(pile_toe_depth);
 
 # ╔═╡ bdf90bbe-5792-4b68-b4fc-f91d77ee00af
-E_Lon2 = fun_E0_linear(pile_toe_depth / 2)
+E_Lon2 = fun_E0_linear(pile_toe_depth / 2);
 
 # ╔═╡ 62529209-cd12-4b86-a11a-40ae30edd10a
-k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν = Poisson_ratio)
+k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν = Poisson_ratio);
 
 # ╔═╡ e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
-md"""Then we get the pile head displacement adopting the relationship
+md"""Then we get the pile head displacement using the relationship
 
 ``k = k_{0}\cdot(1 - (P/P_{ult})^{0.3})``
 
@@ -228,10 +228,85 @@ md"""Then we get the pile head displacement adopting the relationship
 # ╔═╡ 90225873-19cf-4d0f-994f-e8c071dd676e
 displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
 
+# ╔═╡ 8aad4378-bb79-418b-ac6c-c9a87721245d
+pile_capacity_MN = round(pile_head_loads[argmin(abs.(displacement .- allowable_pile_head_settlement_m))],digits = 2);
+
+# ╔═╡ 07b177f1-bbaf-46b8-91c4-662364235435
+md"""The pile capacity is **$(pile_capacity_MN) (MN)**"""
+
+# ╔═╡ 426df270-a00d-4c81-b2d2-7d23d38c616e
+pc_index = argmin(abs.(pile_head_loads .- pile_capacity_MN));
+
+# ╔═╡ 82d8b1c9-f6b7-40a7-a5f2-1f148e80ea23
+md""" #### Results """
+
 # ╔═╡ 044fc861-23cb-41de-9072-17878ea79f59
-prs.show_table([pile_head_loads, displacement], ["Load (MN)", "Disp (m)"],num_rows = 16, formatters = ft_printf("%7.5f"))
+prs.show_table([pile_head_loads[1:pc_index], displacement[1:pc_index]], ["Load (MN)", "Disp (m)"],num_rows = 15, printformat = "%7.5f")
 
 # ╔═╡ 71c7b8e2-113b-47e8-88b5-4b39269de1a9
+begin
+	f = Figure()
+	ax = Axis(f[1, 1], xlabel = "Pile head displacement (m)", ylabel = "Load (MN)",
+    title = "Pile load displacement reponse")
+	lines!(ax, displacement[1:pc_index], pile_head_loads[1:pc_index])
+	f
+end
+
+# ╔═╡ 5cae2d5a-78b0-40fe-b850-234ba198f289
+md"-----------------------
+### Load carried by pile shaft versus depth
+"
+
+# ╔═╡ 9d92ec56-4308-462d-80e6-c567d3bd85e4
+capacity_factor = round(pile_capacity_MN / pile_ult_load, digits = 3);
+
+# ╔═╡ f417c863-639b-437f-87e5-7b6b7e405424
+md"""Get the shaft resistance (MPa) for each node at capacity"""
+
+# ╔═╡ e49964d6-fcea-48f1-b1c6-87270f02c1c5
+fshaft_factored = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor = capacity_factor);
+
+# ╔═╡ e6218cfe-f642-43e3-a803-5baf57c63715
+md"""Calculate the load (MN) carried by each element of the shaft"""
+
+# ╔═╡ fe4ba3bc-31ba-4f2a-9279-97a98a0b075a
+Qshaft_factored = append!([0.0],pi * pile_diameter * (depth_m[2:end] .- depth_m[1:end-1]) .* 0.5 .* (fshaft_factored[2:end] .+ fshaft_factored[1:end-1]));
+
+# ╔═╡ 4023e99a-6f08-41b5-9ffb-fe3748a64b09
+md"""Calculate the load (MN) carried by the shaft below a given depth"""
+
+# ╔═╡ d89dcbf3-d2a3-4a94-8a63-4469c5cabba7
+md"""
+!!! note
+	move this section to a function
+"""
+
+# ╔═╡ 83b0afb3-ca3e-4639-815a-cef48ca493d9
+begin 
+	mydepth = depth_m[depth_m .<= pile_toe_depth]
+	myshaftload = zeros(Float64,length(mydepth))
+	myshaftload[1] = capacity_factor * pile_ult_load
+	for i=2:length(mydepth)
+		myshaftload[i] = myshaftload[i-1] - Qshaft_factored[i]
+	end
+	# get the loads carried by shaft and base at capacity
+	total_shaft_MN_at_capacity = pile_ult_load * capacity_factor - myshaftload[end];
+	total_base_MN_at_capacity = pile_ult_load * capacity_factor - total_shaft_MN_at_capacity;
+ end;
+
+# ╔═╡ a502db07-1047-4da0-ba88-fe8f77a932b2
+begin
+	f2 = Figure(size = (400,600))
+	ax_pshaftload = Axis(f2[1, 1], xlabel = "Load (m)", ylabel = "Elevation (m)",
+	title = "Load carried by shaft", limits = (0.0, 1.1*pile_capacity_MN, -pile_toe_depth - 1, 0))
+	lines!(ax_pshaftload, myshaftload, -mydepth, )
+	f2
+end
+
+# ╔═╡ da3b91d3-015a-45a6-8930-512a82023dce
+
+
+# ╔═╡ 9a29639b-3561-4941-8d44-4d9378f68e34
 
 
 # ╔═╡ 57d3efc5-531b-43f1-a859-e6f11a0c266b
@@ -342,7 +417,7 @@ figIc
 # ╟─08304a65-5440-4232-900b-6db2b2ffbde1
 # ╠═2da912f1-4330-4bef-a662-1bd482b8ea11
 # ╟─2175460a-fe25-4f94-8878-d26475b5b1d7
-# ╟─27fc31b2-54cd-46e5-9197-db83b7103aaa
+# ╠═27fc31b2-54cd-46e5-9197-db83b7103aaa
 # ╟─4044fcf1-833d-4c35-810a-63d72453bd06
 # ╠═98d352d1-9130-4356-89bc-1402b8ea67e0
 # ╟─2bcabf18-87fb-49b2-956f-916a2a304200
@@ -351,8 +426,24 @@ figIc
 # ╠═62529209-cd12-4b86-a11a-40ae30edd10a
 # ╟─e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
 # ╠═90225873-19cf-4d0f-994f-e8c071dd676e
+# ╟─07b177f1-bbaf-46b8-91c4-662364235435
+# ╠═8aad4378-bb79-418b-ac6c-c9a87721245d
+# ╠═426df270-a00d-4c81-b2d2-7d23d38c616e
+# ╟─82d8b1c9-f6b7-40a7-a5f2-1f148e80ea23
 # ╠═044fc861-23cb-41de-9072-17878ea79f59
 # ╠═71c7b8e2-113b-47e8-88b5-4b39269de1a9
+# ╟─5cae2d5a-78b0-40fe-b850-234ba198f289
+# ╠═9d92ec56-4308-462d-80e6-c567d3bd85e4
+# ╟─f417c863-639b-437f-87e5-7b6b7e405424
+# ╠═e49964d6-fcea-48f1-b1c6-87270f02c1c5
+# ╟─e6218cfe-f642-43e3-a803-5baf57c63715
+# ╠═fe4ba3bc-31ba-4f2a-9279-97a98a0b075a
+# ╟─4023e99a-6f08-41b5-9ffb-fe3748a64b09
+# ╟─d89dcbf3-d2a3-4a94-8a63-4469c5cabba7
+# ╠═83b0afb3-ca3e-4639-815a-cef48ca493d9
+# ╠═a502db07-1047-4da0-ba88-fe8f77a932b2
+# ╠═da3b91d3-015a-45a6-8930-512a82023dce
+# ╠═9a29639b-3561-4941-8d44-4d9378f68e34
 # ╟─57d3efc5-531b-43f1-a859-e6f11a0c266b
 # ╠═c6730ab0-4669-4ff4-9658-df539fe4169d
 # ╠═48366eb0-8138-4719-a0dd-e9370d9cb806
