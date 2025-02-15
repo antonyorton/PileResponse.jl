@@ -60,7 +60,9 @@ end
 	get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_resistance::Float64)\n
 	Returns the pile head displacement for the given load vector
 
-The assumption is that the pile head stiffness k for a given load P can be approximated as ``k = k_{0}(1 - (P/P_{ult})^{0.3})``.\n
+The assumption is that the pile head stiffness k for a given load P can be approximated as  
+
+ - ``k = k_{0}(1 - (P/P_{ult})^{0.3})``.\n
 For further details see:\n
  - Mayne, P. W. (2001) Stress-strain-strength flow parameters from enhanced in-situ tests.\n 
  - Fahey, M. and Carter, J. P. (1993) A finite element study of the pressuremeter in sand using a nonlinear elastic plastic model.

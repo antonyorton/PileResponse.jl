@@ -2,6 +2,7 @@ cd(@__DIR__) # go into docs folder
 import Pkg;
 Pkg.activate(@__DIR__);
 
+
 using Documenter, Literate, PileResponse
 
 # convert tutorial to markdown
@@ -17,4 +18,5 @@ pages = [
 
 makedocs(;
     pages,
-    sitename="PileResponse.jl documentation")
+    sitename="PileResponse.jl documentation",
+)

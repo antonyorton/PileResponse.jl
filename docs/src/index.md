@@ -2,14 +2,16 @@
 
 ```@contents
 Pages = ["index.md", "tutorial.md", "api.md"]
-Depth = 1
+Depth = 3
 ```
+
+`Pkg> add "https://github.com/antonyorton/PileResponse.jl"`
 
 PileResponse.jl is a module designed for the assessment of the load-deflection response of a pile head under static vertical load. The assessment depends on the pile type and the results of a single cone penetrometer test (CPT) conducted to at least the design toe level of the pile.\
 \
 The assessment of ultimate pile shaft and base capacities follows the approach outlined by Frank (2017). The assessment of the non linear load-deflection response is based on the initial pile head stiffness estimated by the Randolph and Wroth (1978) formula. The pile head stiffness is then factored down for increasing loads following the equation proposed by Mayne (2001).\
 \
-The interpretation of soil behaviour type (`I_{c}`) and shear wave velocity (`V_{s}`) from the CPT data follow correlations provided by Robertson and Cabal (2022).
+The interpretation of soil behaviour type ($I_{c}$) and shear wave velocity ($V_{s}$) from the CPT data follow correlations provided by Robertson and Cabal (2022).
 
 **References**
 
