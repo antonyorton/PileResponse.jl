@@ -40,19 +40,19 @@ end
 
 
 """
-	show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64 = 5, formatters = ft_printf("%5.3f"))
+    function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
 
 	Show a formatted table in HTML with given column data and headers. 
 
 `columns` = `[col1data, col2data, ..]` a list of vectors with the data for each column\\
 `header` = `["col1 name", "col2 name", ...]` a list of strings with the column names
 """
-function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, formatters=ft_printf("%5.3f"))
+function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
     tabledata = stack(columns)
     n_total = length(tabledata[:, 1])
     indices = Int64.(1.0:floor(n_total / (num_rows - 1)):n_total+1)
     indices[end] = min.(n_total, indices[end])
-    return pretty_table(HTML, tabledata[indices, :], formatters=formatters, header=header)
+    return pretty_table(HTML, tabledata[indices, :], formatters=ft_printf(printformat), header=header)
 end
 
 

@@ -229,7 +229,7 @@ md"""Then we get the pile head displacement adopting the relationship
 displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
 
 # ╔═╡ 044fc861-23cb-41de-9072-17878ea79f59
-prs.show_table([pile_head_loads, displacement], ["Load (MN)", "Disp (m)"],num_rows = 15)
+prs.show_table([pile_head_loads, displacement], ["Load (MN)", "Disp (m)"],num_rows = 16, formatters = ft_printf("%7.5f"))
 
 # ╔═╡ 71c7b8e2-113b-47e8-88b5-4b39269de1a9
 
