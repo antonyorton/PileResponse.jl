@@ -1,6 +1,7 @@
 module PileResponse
 
 export
+    find_cpt_column_names,
     get_least_squares_interpolator,
     show_table,
     get_pile_head_displacement,

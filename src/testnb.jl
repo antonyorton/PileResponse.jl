@@ -54,6 +54,9 @@ md"""-------------------------
 # ╔═╡ 5e0cacc3-b7ff-4398-bd1b-89e071127053
 columns = collect(keys(data));
 
+# ╔═╡ e6c01185-4d07-4fb8-8e71-6e6940f77ee5
+
+
 # ╔═╡ 1ba92e87-98a1-4207-b97f-0835d1c02e2d
 begin
 	depth_col = [item for item in columns if occursin("depth",lowercase(item))][1]
@@ -301,6 +304,7 @@ figIc
 # ╠═02af09f4-db32-408f-9283-6fc77d12d792
 # ╟─24cbc2c5-ce1e-442a-9813-2e78767d3ed1
 # ╠═5e0cacc3-b7ff-4398-bd1b-89e071127053
+# ╠═e6c01185-4d07-4fb8-8e71-6e6940f77ee5
 # ╠═1ba92e87-98a1-4207-b97f-0835d1c02e2d
 # ╠═eb61fe89-d2e9-4445-a529-86448e9b6dc5
 # ╟─8470d353-7978-4769-ba19-3e6cc2648fac
