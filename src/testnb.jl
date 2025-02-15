@@ -153,6 +153,9 @@ fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor = 1
 # ╔═╡ b95a595e-1c89-4a31-9738-1e4bc5ad4c76
 md"Calulate the ultimate shaft load (MN) for the pile"
 
+# ╔═╡ ff18a7c8-2a50-4e30-bbdb-2efb9d25082d
+ult_shaft_MN = prs.get_ultimate_shaft_load(depth_m, fshaft_MPa, pile_diameter, pile_toe_depth);
+
 # ╔═╡ a20911f8-4211-40ad-8600-4731bf4db194
 md"The ultimate shaft load is **$(round(ult_shaft_MN, digits = 3)) (MN)**"
 
@@ -160,17 +163,11 @@ md"The ultimate shaft load is **$(round(ult_shaft_MN, digits = 3)) (MN)**"
 md"--------------------
 #### Ultimate base load"
 
-# ╔═╡ 9b13cd35-23c4-47fd-99c6-6bb0c1465dd4
-md"Get the kc values for the selected pile type"
-
-# ╔═╡ 17271f9f-2304-40f6-b18d-3a0e2f15a3fc
-kc = prs.get_kc_base_CPT2012()[pile_type]
-
 # ╔═╡ 15071d39-4f92-4150-9e19-89515174a9e8
-md"Then for the soil type at the base of the pile"
+md"Get the kc values for the selected pile type and the soil type at the base of the pile"
 
 # ╔═╡ f1b72e6b-35eb-4729-a337-10293db44411
-kc_at_base = kc[soil_type_CPT2012[depth_m .== pile_toe_depth]][1]
+kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[depth_m .== pile_toe_depth]][1]
 
 # ╔═╡ 3a1328fb-4435-4589-b6e1-9117823bc92f
 md"Get the average qc value within 1.5 diameters of the pile base"
@@ -179,7 +176,7 @@ md"Get the average qc value within 1.5 diameters of the pile base"
 qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_toe_depth, pile_diameter, clip_to_30pct = false)
 
 # ╔═╡ 1fd7e0cd-05a5-4fa9-bb53-a657a384d04c
-md"The ultimate base load (MN) is then ``q_{c(avg)} \cdot k_{c}``"
+md"The ultimate base load (MN) is then ``q_{c_{avg}} \cdot k_{c}``"
 
 # ╔═╡ 51d28aa2-c59b-4165-b75b-f82ebf7359d0
 ult_base_MN = qc_avg_base * kc_at_base * pi * pile_diameter ^ 2 / 4;
@@ -196,10 +193,16 @@ md"-----------------------
 md"The pile ultimate load is **$(round(ult_base_MN + ult_shaft_MN, digits = 3)) (MN)**"
 
 # ╔═╡ 27fc31b2-54cd-46e5-9197-db83b7103aaa
-
+md"-----------------------
+#### Pile laod displacement response
+"
 
 # ╔═╡ 62529209-cd12-4b86-a11a-40ae30edd10a
-
+begin
+	E_L = fun_E0_linear(pile_toe_depth)
+	E_Lon2 = fun_E0_linear(pile_toe_depth / 2)
+	k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν = Poisson_ratio)
+end;
 
 # ╔═╡ e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
 
@@ -274,35 +277,6 @@ end;
 # ╔═╡ 4c8139ac-c625-4168-b86d-e1c3a3a0561e
 figIc
 
-# ╔═╡ 9f508b96-2971-49ce-9cef-48e7327d1930
-begin
-	ult_shaft_MN = 0.0
-	for i in eachindex(depth_m)
-		depth_m[i] > pile_toe_depth && break
-		if i > 1
-			ult_shaft_MN += pi * pile_diameter * (depth_m[i] - depth_m[i - 1]) *
-			0.5 * (fshaft_MPa[i] + fshaft_MPa[i - 1])
-		end
-	end
-end
-
-# ╔═╡ 5a322c8e-01e7-426f-93e3-ee98c6efb008
-# ╠═╡ disabled = true
-#=╠═╡
-begin
-	sum = 0.0; depth = 0.0; count = 1;
-	while depth < pile_toe_depth
-		
-		sum += pi * pile_diameter * (depth_m[count + 1] - depth_m[count]) *
-			0.5 * (fshaft_MPa[count + 1] + fshaft_MPa[count])
-		
-		depth = depth_m[count + 1]
-		count += 1
-	end
-	ult_shaft_MN = sum;
-end;
-  ╠═╡ =#
-
 # ╔═╡ Cell order:
 # ╟─dfc0d050-e922-11ef-06ae-b1c7dbc6526f
 # ╠═d27efcff-916b-44f8-ad8f-4d8d08ae780e
@@ -337,22 +311,19 @@ end;
 # ╟─e94bd027-e536-44ff-9bc8-a22d7d40f4e0
 # ╠═b6ae3d81-38cb-4a80-9219-3833d4463666
 # ╟─b95a595e-1c89-4a31-9738-1e4bc5ad4c76
-# ╠═9f508b96-2971-49ce-9cef-48e7327d1930
-# ╠═5a322c8e-01e7-426f-93e3-ee98c6efb008
+# ╠═ff18a7c8-2a50-4e30-bbdb-2efb9d25082d
 # ╟─a20911f8-4211-40ad-8600-4731bf4db194
 # ╟─c0291985-31f2-42d7-b704-57a814bf79fd
-# ╟─9b13cd35-23c4-47fd-99c6-6bb0c1465dd4
-# ╠═17271f9f-2304-40f6-b18d-3a0e2f15a3fc
 # ╟─15071d39-4f92-4150-9e19-89515174a9e8
-# ╟─f1b72e6b-35eb-4729-a337-10293db44411
+# ╠═f1b72e6b-35eb-4729-a337-10293db44411
 # ╟─3a1328fb-4435-4589-b6e1-9117823bc92f
 # ╠═b40eb8ce-7524-46bd-988d-34251ef78d0c
 # ╟─1fd7e0cd-05a5-4fa9-bb53-a657a384d04c
 # ╠═51d28aa2-c59b-4165-b75b-f82ebf7359d0
 # ╟─e1136fc9-d88a-4a2f-8503-2b47dd0e0eaf
-# ╟─08304a65-5440-4232-900b-6db2b2ffbde1
+# ╠═08304a65-5440-4232-900b-6db2b2ffbde1
 # ╟─2175460a-fe25-4f94-8878-d26475b5b1d7
-# ╠═27fc31b2-54cd-46e5-9197-db83b7103aaa
+# ╟─27fc31b2-54cd-46e5-9197-db83b7103aaa
 # ╠═62529209-cd12-4b86-a11a-40ae30edd10a
 # ╠═e42e9744-ab6e-47c0-9e2f-9ae2a94e6284
 # ╠═90225873-19cf-4d0f-994f-e8c071dd676e

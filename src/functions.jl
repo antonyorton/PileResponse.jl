@@ -86,7 +86,7 @@ end
 
 
 """
-	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Int64, Esoil_Lon2::Int64; ν::Float64 = 0.3)\n
+	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64 = 0.3)\n
 
 	Returns the initial, or small strain, pile head stiffness (MN/m)
 
@@ -98,7 +98,7 @@ The theory assumes that the soil has a linearly increasing elastic modulus with 
 `Esoil_Lon2 (MPa)` is the small strain (E₀) elastic modulus of the soil at the midpoint of the pile shaft\\
 `ν` (input as \\nu[tab]) is the Poisson's ratio of the soil
 """
-function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Int64, Esoil_Lon2::Int64; ν::Float64=0.3)
+function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64=0.3)
 
     L = pile_length
     G_L = Esoil_L / 2 / (1 + ν)
