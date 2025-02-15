@@ -5,6 +5,26 @@ using Statistics
 
 
 """
+    find_cpt_column_names(names::Vector{SubString{String}})
+
+    Returns a vector `[depth_col, qc_col, fs_col, u2_col]` providing the relevant names for each item from `names`.\n The function looks for the strings `depth`, `qc`, `fs` and `u2` within the (non case sensitive) items in `names`
+
+# Example
+```julia
+data = read_delimited_text_file("./data/example_cpt_data.csv", delim=',')
+column_names = collect(keys(data))
+depth_col, qc_col, fs_col, u2_col = find_cpt_column_names(column_names)
+```
+"""
+function find_cpt_column_names(names::Vector{SubString{String}})
+    depth_col = [item for item in names if occursin("depth", lowercase(item))][1]
+    qc_col = [item for item in names if occursin("qc", lowercase(item))][1]
+    fs_col = [item for item in names if occursin("fs", lowercase(item))][1]
+    u2_col = [item for item in names if occursin("u2", lowercase(item))][1]
+    return [depth_col, qc_col, fs_col, u2_col]
+end
+
+"""
 	get_least_squares_interpolator(xvals::AbstractVector, yvals::AbstractVector; p0::AbstractVector = [0.0,0.0])
 
 	Returns a function `fun()` such that `fun(x) = mx + b` is the least squares linear approximation to [xvals, yvals]\n
