@@ -8,6 +8,7 @@ export
     get_initial_pile_head_stiffness,
     get_soil_type_CPT2012,
     get_kc_base_CPT2012,
+    get_ultimate_shaft_load,
     get_ultimate_shaft_resistance,
     get_fsmax_shaft_CPT2012,
     get_alpha_shaft_CPT2012,

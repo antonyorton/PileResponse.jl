@@ -180,6 +180,25 @@ end
 
 
 """
+    get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_toe_depth::Float64)\n
+    returns the ultimate shaft load for the pile (MN)
+
+`fshaft_MPa` is the ultimate shaft resistance (MPa) for each node corresponding to the `depth_m` vector.
+"""
+function get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_toe_depth::Float64)
+    ult_shaft_MN = 0.0
+    for i in eachindex(depth_m)
+        depth_m[i] > pile_toe_depth && break
+        if i > 1
+            ult_shaft_MN += pi * pile_diameter * (depth_m[i] - depth_m[i-1]) *
+                            0.5 * (fshaft_MPa[i] + fshaft_MPa[i-1])
+        end
+    end
+    return ult_shaft_MN
+end
+
+
+"""
 	get_ultimate_shaft_resistance(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, pile_type::String; factor::Float64 = 1.0)\n
 
 	Returns the shaft resistance (MPa) for each element.

@@ -55,15 +55,7 @@ md"""-------------------------
 columns = collect(keys(data));
 
 # ╔═╡ e6c01185-4d07-4fb8-8e71-6e6940f77ee5
-
-
-# ╔═╡ 1ba92e87-98a1-4207-b97f-0835d1c02e2d
-begin
-	depth_col = [item for item in columns if occursin("depth",lowercase(item))][1]
-	qc_col = [item for item in columns if occursin("qc",lowercase(item))][1]
-	fs_col = [item for item in columns if occursin("fs",lowercase(item))][1]
-	u2_col = [item for item in columns if occursin("u2",lowercase(item))][1]
-end;
+depth_col, qc_col, fs_col, u2_col = prs.find_cpt_column_names(columns);
 
 # ╔═╡ eb61fe89-d2e9-4445-a529-86448e9b6dc5
 [depth_col, qc_col, fs_col, u2_col]
@@ -160,20 +152,6 @@ fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor = 1
 
 # ╔═╡ b95a595e-1c89-4a31-9738-1e4bc5ad4c76
 md"Calulate the ultimate shaft load (MN) for the pile"
-
-# ╔═╡ 5a322c8e-01e7-426f-93e3-ee98c6efb008
-begin
-	sum = 0.0; depth = 0.0; count = 1;
-	while depth < pile_toe_depth
-		
-		sum += pi * pile_diameter * (depth_m[count + 1] - depth_m[count]) *
-			0.5 * (fshaft_MPa[count + 1] + fshaft_MPa[count])
-		
-		depth = depth_m[count + 1]
-		count += 1
-	end
-	ult_shaft_MN = sum;
-end;
 
 # ╔═╡ a20911f8-4211-40ad-8600-4731bf4db194
 md"The ultimate shaft load is **$(round(ult_shaft_MN, digits = 3)) (MN)**"
@@ -296,6 +274,35 @@ end;
 # ╔═╡ 4c8139ac-c625-4168-b86d-e1c3a3a0561e
 figIc
 
+# ╔═╡ 9f508b96-2971-49ce-9cef-48e7327d1930
+begin
+	ult_shaft_MN = 0.0
+	for i in eachindex(depth_m)
+		depth_m[i] > pile_toe_depth && break
+		if i > 1
+			ult_shaft_MN += pi * pile_diameter * (depth_m[i] - depth_m[i - 1]) *
+			0.5 * (fshaft_MPa[i] + fshaft_MPa[i - 1])
+		end
+	end
+end
+
+# ╔═╡ 5a322c8e-01e7-426f-93e3-ee98c6efb008
+# ╠═╡ disabled = true
+#=╠═╡
+begin
+	sum = 0.0; depth = 0.0; count = 1;
+	while depth < pile_toe_depth
+		
+		sum += pi * pile_diameter * (depth_m[count + 1] - depth_m[count]) *
+			0.5 * (fshaft_MPa[count + 1] + fshaft_MPa[count])
+		
+		depth = depth_m[count + 1]
+		count += 1
+	end
+	ult_shaft_MN = sum;
+end;
+  ╠═╡ =#
+
 # ╔═╡ Cell order:
 # ╟─dfc0d050-e922-11ef-06ae-b1c7dbc6526f
 # ╠═d27efcff-916b-44f8-ad8f-4d8d08ae780e
@@ -305,7 +312,6 @@ figIc
 # ╟─24cbc2c5-ce1e-442a-9813-2e78767d3ed1
 # ╠═5e0cacc3-b7ff-4398-bd1b-89e071127053
 # ╠═e6c01185-4d07-4fb8-8e71-6e6940f77ee5
-# ╠═1ba92e87-98a1-4207-b97f-0835d1c02e2d
 # ╠═eb61fe89-d2e9-4445-a529-86448e9b6dc5
 # ╟─8470d353-7978-4769-ba19-3e6cc2648fac
 # ╠═c629a73a-ae6b-4702-a5c8-325add91b85e
@@ -331,6 +337,7 @@ figIc
 # ╟─e94bd027-e536-44ff-9bc8-a22d7d40f4e0
 # ╠═b6ae3d81-38cb-4a80-9219-3833d4463666
 # ╟─b95a595e-1c89-4a31-9738-1e4bc5ad4c76
+# ╠═9f508b96-2971-49ce-9cef-48e7327d1930
 # ╠═5a322c8e-01e7-426f-93e3-ee98c6efb008
 # ╟─a20911f8-4211-40ad-8600-4731bf4db194
 # ╟─c0291985-31f2-42d7-b704-57a814bf79fd
