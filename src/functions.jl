@@ -334,9 +334,6 @@ if `clip_to_30pct` = `false`, values will not be limited to +/- 30% of the value
 function get_average_qc_at_pile_base(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, pile_toe_depth::Float64, pile_diameter::Float64; clip_to_30pct::Bool=false)
 
     # Get qc values within +/- 1.5 pile diameters from the toe
-
-    # base_qcvals = qc_MPa[depth_m.>=pile_toe_depth-1.5*pile_diameter.&&depth_m.<=pile_toe_depth+1.5*pile_diameter]
-
     indices = findall(x -> (x >= pile_toe_depth - 1.5 * pile_diameter) & (x <= pile_toe_depth + 1.5 * pile_diameter), depth_m)
     base_qcvals = qc_MPa[indices]
 
