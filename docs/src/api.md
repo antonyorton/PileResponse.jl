@@ -1,4 +1,4 @@
-# Functions
+# API
 
 ```@docs
 find_cpt_column_names

@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "42ce4b20c60f30b33bb6419cc88b59096e118a95"
+project_hash = "8b6d11e16b383befc5a784cacf242b7875e3ef1c"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -1116,12 +1116,6 @@ deps = ["Dates", "PrecompileTools", "UUIDs"]
 git-tree-sha1 = "8489905bcdbcfac64d1daa51ca07c0d8f0283821"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "2.8.1"
-
-[[deps.PileResponse]]
-deps = ["DataInterpolations", "DelimitedFiles", "LsqFit", "PrettyTables", "Statistics"]
-path = "C:\\Users\\anton\\.julia\\dev\\PileResponse"
-uuid = "e65c56c3-5d0d-4985-9588-0dd1a03c1526"
-version = "1.0.0-DEV"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LLVMOpenMP_jll", "Libdl"]

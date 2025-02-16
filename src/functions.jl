@@ -8,7 +8,7 @@ using PrettyTables
 """
     find_cpt_column_names(names::Vector{SubString{String}})
 
-    Returns a vector `[depth_col, qc_col, fs_col, u2_col]` providing the relevant names for each item from `names`.\n The function looks for the strings `depth`, `qc`, `fs` and `u2` within the (non case sensitive) items in `names`
+    Returns a vector `[depth_col, qc_col, fs_col, u2_col]` providing the relevant names for each item from `names`.\n The function looks for the strings "depth", "qc", "fs" and "u2" within the items in `names`. It is not case sensitive.
 
 # Example
 ```julia
@@ -55,14 +55,21 @@ function show_table(columns::AbstractArray, header::AbstractVector{String}; num_
     return pretty_table(HTML, tabledata[indices, :], formatters=ft_printf(printformat), header=header)
 end
 
+"""
+    list_available_pile_types()
+    Returns a list of the available pile types which can be used in the analysis
+"""
+function list_available_pile_types()
+    return sort(collect(keys(get_alpha_shaft_CPT2012())))
+end
 
 """
 	get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_resistance::Float64)\n
 	Returns the pile head displacement for the given load vector
 
-The assumption is that the pile head stiffness k for a given load P can be approximated as  
+The assumption is that the pile head stiffness k for a given load P can be approximated as
 
- - ``k = k_{0}(1 - (P/P_{ult})^{0.3})``.\n
+ - ``k = k_{0}(1 - (P/P_{ult})^{0.3})``\n
 For further details see:\n
  - Mayne, P. W. (2001) Stress-strain-strength flow parameters from enhanced in-situ tests.\n 
  - Fahey, M. and Carter, J. P. (1993) A finite element study of the pressuremeter in sand using a nonlinear elastic plastic model.

@@ -2,7 +2,7 @@ cd(@__DIR__) # go into docs folder
 import Pkg;
 Pkg.activate(@__DIR__);
 
-
+push!(LOAD_PATH, "../src/")
 using Documenter, Literate, PileResponse
 
 # convert tutorial to markdown
@@ -19,4 +19,9 @@ pages = [
 makedocs(;
     pages,
     sitename="PileResponse.jl documentation",
+    repo=Remotes.GitHub("antonyorton", "PileResponse.jl")
+)
+
+deploydocs(
+    repo="https://github.com/antonyorton/PileResponse.jl.git",
 )

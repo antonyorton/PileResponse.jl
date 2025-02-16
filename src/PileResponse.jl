@@ -4,6 +4,7 @@ export
     find_cpt_column_names,
     get_least_squares_interpolator,
     show_table,
+    list_available_pile_types,
     get_pile_head_displacement,
     get_initial_pile_head_stiffness,
     get_soil_type_CPT2012,
