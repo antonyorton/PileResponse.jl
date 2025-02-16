@@ -2,7 +2,7 @@ cd(@__DIR__) # go into docs folder
 import Pkg;
 Pkg.activate(@__DIR__);
 
-# push!(LOAD_PATH, "../src/")
+push!(LOAD_PATH, "../src/")
 using Documenter, Literate, PileResponse
 
 # convert tutorial to markdown
