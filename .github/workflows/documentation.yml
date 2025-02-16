@@ -1,16 +1,15 @@
 name: Documentation
-
+# This is a standard Julia setup for GitHub CI
 on:
   push:
     branches:
-      - master # update to match your development branch (master, main, dev, trunk, ...)
+      - main # update to match your main branch
     tags: '*'
   pull_request:
 
 jobs:
   build:
     permissions:
-      actions: write
       contents: write
       pull-requests: read
       statuses: write
@@ -20,14 +19,31 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - uses: julia-actions/cache@v2
-      - name: Install dependencies
-        # run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.
-        # instantiate()'
-        #I added this line instead of the one above since I do not have an actual Julia package
-        run: julia --project=docs/ -e 'using Pkg; Pkg.instantiate()'
+      - uses: julia-actions/cache@v1
+
+# Now this is where things focus on the documentation
+# build and deployment.
+# The next steps continue with the `doc` folder build.
+
+      # This is really all you care about; 2-steps process
+      # step 1, assuming the documentation Project.toml file is in `docs` folder
+      # This works for the standard Julia package layouts (i.e. a Project.toml and
+      # a src/ directory at the top-level).
+      - name: Install docs dependencies
+        run: julia -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+        # If you are committing the docs/Manifest.toml file, to fully fix the package
+        # versions used by the documentation package environment, you can use this
+        # line instead. You just need to make sure that the package is a develop-dependency
+        # in the docs/Manifest.toml
+        #run: julia --project=docs/ -e 'using Pkg; Pkg.instantiate()'
+      # step 2 (note project path remains the same!)
       - name: Build and deploy
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # If authenticating with GitHub Actions token
-          # DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # If authenticating with SSH deploy key
+          # An access token must be provided to "push" the documentation build.
+          # GitHub automates this via your account with this line:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # See the discussion around "TagBot" in the Documenter.jl website:
+          # https://documenter.juliadocs.org/stable/man/hosting/#GitHub-Actions
+          # for automating creating tagged documentation builds after
+          # registering your package in the Julia General Registry
         run: julia --project=docs/ docs/make.jl
