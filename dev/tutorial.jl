@@ -1,7 +1,7 @@
 # # [Tutorial](@id tutorial)
 
-# Note: Remember to add the `PileResponse` package if you have not already.  
-#  - `Pkg> add "https://github.com/antonyorton/PileResponse.jl"`
+
+# `Pkg> add "https://github.com/antonyorton/PileResponse.jl"`
 
 push!(LOAD_PATH, "../../src/") #This line can be ignored if the package is added as above
 import PileResponse as prs
@@ -54,11 +54,10 @@ gw_depth = 3.0; # m below ground
 
 # ## Derive ``I_{c}``, ``V_{s}`` and ``E_{0}``
 # From the correlations published by Roberston and Cabal (2022), we derive\
-# \
 # The soil behaviour type
 #   - ``I_{c} = \sqrt{(3.47 - log_{10}(Q_{t}))^{2} + (log_{10}(F_{r}) + 1.22)^{2}}`` , and 
 # The shear wave velocity
-#   - ``\sqrt{(\alpha_{vs}\cdot \large\frac{q_{n}}{\small{0.101}})}``, where ``\alpha_{vs} = 10^{(0.55 Ic + 1.68)}``
+#   - ``V_{s} = \sqrt{(\alpha_{vs}\cdot \large\frac{q_{n}}{\small{0.101}})}``, where ``\alpha_{vs} = 10^{(0.55 Ic + 1.68)}``
 # We then use the following two relationships to derive the small strain elastic modulus $E_{0}$:
 #   - ``G_{0} = \frac{\gamma}{9.81} \cdot V_{s}^2``
 #
@@ -71,33 +70,34 @@ E0 = prs.get_E0(Vs, gamma=gamma_soil, ν=Poisson_ratio);
 # ### Linear approximation to ``E_{0}`` with depth
 # For the assessment of the intial pile head stiffness, we need to model the soil profile as having a linearly increasing elastic modulus with depth. This is common in many situations.  
 
-# We fit a line to the $E_{0}$ data using a least squares fit.
+# We fit a line to the $E_{0}$ data using a least squares fit
 fun_E0_linear = prs.get_least_squares_interpolator(depth_m, E0);
 
 # ### Plot the derived values from the CPT data
-f = Figure(size=(900, 750));
-ax1 = Axis(f[1, 1], title="Ic", xlabel="Ic", ylabel="Elevation (m)");
-ax2 = Axis(f[1, 2], title="Vs (m/s)", xlabel="Vs (m/s)");
-ax3 = Axis(f[1, 3], title="E₀ (MPa)", xlabel="E₀ (MPa)");
-lines!(f[1, 1], Ic, -depth_m, color=RGBf(0.1, 0.5, 0.1));
-lines!(f[1, 2], Vs, -depth_m, color=RGBf(0.1, 0.5, 0.1));
-lines!(f[1, 3], E0, -depth_m, color=RGBf(0.1, 0.5, 0.1));
-lines!(f[1, 3], fun_E0_linear(depth_m), -depth_m, color=RGBf(0.1, 0.5, 0.1), linestyle=:dash);
-f
+# (the code, which is similar to above for plotting the raw data, is hidden)
+f = Figure(size=(900, 750)); #hide
+ax1 = Axis(f[1, 1], title="Ic", xlabel="Ic", ylabel="Elevation (m)"); #hide
+ax2 = Axis(f[1, 2], title="Vs (m/s)", xlabel="Vs (m/s)"); #hide
+ax3 = Axis(f[1, 3], title="E₀ (MPa)", xlabel="E₀ (MPa)"); #hide
+lines!(f[1, 1], Ic, -depth_m, color=RGBf(0.1, 0.5, 0.1)); #hide
+lines!(f[1, 2], Vs, -depth_m, color=RGBf(0.1, 0.5, 0.1)); #hide
+lines!(f[1, 3], E0, -depth_m, color=RGBf(0.1, 0.5, 0.1)); #hide
+lines!(f[1, 3], fun_E0_linear(depth_m), -depth_m, color=RGBf(0.1, 0.5, 0.1), linestyle=:dash); #hide
+f #hide
 
 # ## Pile load test details
 # For this tutorial, we consider a pile load test which was carried out at Mobile, Alabama. The test comprised a 457 mm diameter, 9.5 mm wall, closed-toe, steel-pipe pile driven to 17.0 m below ground and grouted after driving. The pile stick up was approximately 0.9 m above ground.\
 # \
-# Further details of the test can be found at the website of the test organiser [www.fellenius.net](https://www.fellenius.net/)
+# Further details of the test can be found at the website of the test organiser [www.fellenius.net](https://www.fellenius.net/).
 
 # ### Pile properties
-# We assign a pile type from the list of available pile types.
+# We list the available pile types
 prs.list_available_pile_types()
-# 
+# Assign a pile type for the assessment
 pile_type = "Driven pile - steel closed ended";
-# 
+# Assign the pile length
 pile_toe_depth = 17.0; # metres
-# 
+# And the pile diameter
 pile_diameter = 0.457; # metres
 # 
 
@@ -112,9 +112,9 @@ Einner = 20  # GPa;
 Epile_GPa = ((Aouter - Ainner) * Eouter + Ainner * Einner) / Aouter;
 #
 Epile_MPa = round(Int64, 1000 * Epile_GPa);
-print("The elastic modulus of the pile is ", Epile_MPa, " (MPa)")
+print("The elastic modulus of the pile is ", Epile_MPa, " (MPa)")  #hide
 
-# ## Pile ultimate load
+# ## Pile ultimate load assessment
 # In this section we calculate the pile ultimate load following the approach of Frank (2017).\
 # \
 
@@ -127,50 +127,113 @@ print("The elastic modulus of the pile is ", Epile_MPa, " (MPa)")
 
 soil_type_CPT2012 = prs.get_soil_type_CPT2012(Ic);
 
-# ### Pile ultimate shaft load
+# ## Pile ultimate shaft load
 # The ultimate shaft resistance for each node along the pile shaft is obtained as follows:
 # - ``f_{s} = \alpha\cdot f_{sol}``, with ``f_{sol} \leq f_{smax}``\
-# \
 # where:
 # - ``f_{sol}`` is the unfactored shaft resistance dependent on ``q_{c}`` and soil type.
 # - ``\alpha`` is a factor dependent on soil type and pile type.\
 # - ``f_{smax}`` is a the limiting shaft resistance dependent on soil type and pile type.
 
-# First, calculate the ultimate resistance (MPa) for each node along the pile
+# ``f_{sol}`` is shown below for sands and clays. Note that for intermediate soils the function linearly interpolates ``f_{sol}`` between ``I_{c} = 2.05`` (sands) and ``I_{c} = 2.60`` (clays).
 
+## Plot fsol curves #hide
+## data #hide
+qcfsol = (0:0.1:20); #hide
+fsol_sands = prs.get_fsol_shaft_CPT2012(qcfsol, ones(length(qcfsol))) #hide
+fsol_clays = prs.get_fsol_shaft_CPT2012(qcfsol, 3 * ones(length(qcfsol))) #hide
+## figure #hide
+fig_fsol = Figure(size=(700, 500)); #hide
+ax_fsol = Axis(fig_fsol[1, 1], ylabel="fsol (kPa)", xlabel="qc (MPa)", yticks=(0:25:150)) #hide
+lsand1 = lines!(ax_fsol, qcfsol, fsol_sands, color=:Red) #hide
+lclay1 = lines!(ax_fsol, qcfsol, fsol_clays, color=:Blue) #hide
+## legend #hide
+axislegend(ax_fsol, [lsand1, lclay1], ["Sand and gravel", "Clay and silt"], position=:lt); #hide
+fig_fsol
+
+# We first calculate the ultimate resistance (MPa) for each node along the pile
 fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor=1.0);
 
-# Then we can calculate the ultimate shaft load (MN) for the whole pile
-
+# Then the ultimate shaft load (MN) for the whole pile
 ult_shaft_MN = prs.get_ultimate_shaft_load(depth_m, fshaft_MPa, pile_diameter, pile_toe_depth);
-print("The ultimate shaft load is ", round(ult_shaft_MN, digits=3), " (MN)")
+print("The ultimate shaft load is ", round(ult_shaft_MN, digits=3), " (MN)") #hide
 
-# ### Pile ultimate base load
+# ## Pile ultimate base load
 # The ultimate base load is obtained as follows:\
-# \
 # First, we obtain the ultimate base resistance (MPa):
 # - ``f_{b} = k_{c}\cdot q_{ca}``\
 # where:
 # - ``k_{c}`` is a factor dependent on soil type and pile class, and;\
-# - ``q_{ca}`` is the equavalent average cone resistance at the pile base.
+# - ``q_{ca}`` is the equavalent average cone resistance for the soil within 1.5 diameters above and below the pile base
 
 qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_toe_depth, pile_diameter, clip_to_30pct=false);
 #
 kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[depth_m.==pile_toe_depth]][1];
 
-# We then caculate the ultimate base load.
+# We then caculate the ultimate base load
 
 fb_MPa = kc_at_base * qc_avg_base;
 ult_base_MN = pi * pile_diameter^2 / 4 * fb_MPa;
 
-# Display the results
+# And display the results
 
-print("The average qc within 1.5 diameters from the pile base is ", round(qc_avg_base, digits=2), " (MPa)", "\n")
-print("The factor kc is ", kc_at_base, "\n")
-print("The ultimate base load is ", round(ult_base_MN, digits=3), " (MN)", "\n")
+print("The average qc within 1.5 diameters from the pile base is ", round(qc_avg_base, digits=2), " (MPa)", "\n") #hide
+print("The factor kc is ", kc_at_base, "\n") #hide
+print("The ultimate base load is ", round(ult_base_MN, digits=3), " (MN)", "\n") #hide
 
-# ### Predicted pile ultimate load
-print("The predicted pile ultimate load is ", round(ult_base_MN + ult_shaft_MN, digits=3), "(MPa)")
+# ## Pile ultimate load
+pile_ult_load = ult_base_MN + ult_shaft_MN
+print("The predicted pile ultimate load is ", round(pile_ult_load, digits=3), "(MPa)") #hide
 
-# \
-# Further sections to come soon ....
+
+
+# ## Pile load displacement response
+
+# The small strain elastic modulus, ``E_{0}``, along the pile shaft is assumed to vary linearly, and a least squares approximation gives:\
+E_L = fun_E0_linear(pile_toe_depth)
+E_Lon2 = fun_E0_linear(pile_toe_depth / 2)
+print("E₀ at the base of the shaft is ", floor(Int64, round(E_L)), " MPa\n") #hide
+print("E₀ at the midpoint of the shaft is ", floor(Int64, round(E_Lon2)), " MPa") #hide
+
+# The initial pile head stiffness, ``k_{0}``, taking account of pile compressibility, is computed following the closed form elastic solution by Randolph and Wroth (1978) as:
+k0 = prs.get_initial_pile_head_stiffness(pile_toe_depth, pile_diameter, Epile_MPa, E_L, E_Lon2, ν=Poisson_ratio)
+print("k₀ is ", floor(Int64, round(k0)), " MN/m") #hide
+
+# ### The load displacement curve
+# The load displacement curve is derived following a method proposed by Mayne (2001), based on work by Fahey and Carter (1993), which assumes that the pile head stiffness varies as a function of the load ratio ``P/P_{ult}`` as:\
+
+# - ``k = k_{0} \cdot (1 - (P/P_{ult})^{0.3})``
+
+# First we specify the pile head loads
+pile_head_loads = 0.01:0.001:0.90*pile_ult_load;
+# Then we calculate the cumulative displacement at each load
+displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
+
+# ### Pile capacity
+# The pile capacity is calculated as the load at which the allowable pile head settlement is reached.
+
+# Specify the allowable pile head settlement (metres)
+allowable_pile_head_settlement_m = 0.06;
+# Then calculate the pile capacity
+pile_capacity_MN = pile_head_loads[argmin(abs.(displacement .- allowable_pile_head_settlement_m))];
+print("The pile capacity is ", round(pile_capacity_MN, digits=3), " MN\n") #hide
+print("The displacement at capacity is ", round(displacement[argmin(abs.(displacement .- allowable_pile_head_settlement_m))], digits=3), " m") #hide
+
+# Plot the load displacement curve (code is hidden)
+plot_indicies = pile_head_loads .< pile_capacity_MN #hide
+figDisp = Figure(size=(700, 500)) #hide
+Axis(figDisp[1, 1], xticks=(0:0.01:0.2), yticks=(0:0.5:pile_capacity_MN), xlabel="Displacement (m)", ylabel="Pile head load (MN)") #hide
+lines!(figDisp[1, 1], displacement[plot_indicies], pile_head_loads[plot_indicies]) #hide
+figDisp
+
+# And display the results in a table
+table_indices = pile_head_loads .< pile_capacity_MN
+prs.show_table(
+    [pile_head_loads[table_indices], displacement[table_indices]],
+    ["Load (MN)", "Displacement (m)"],
+    num_rows=10,
+    printformat="%8.3f"
+)
+
+# ## Load carried by pile shaft at capacity
+# More to come soon ...
