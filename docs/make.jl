@@ -22,6 +22,10 @@ makedocs(;
     repo=Remotes.GitHub("antonyorton", "PileResponse.jl")
 )
 
+# WARNING: An error occurs if the remote repo has been imported into
+#          the base Julia environment. Best to avoid, or use pkg> develop "https://github ..
+
+# comment out when working locally or not updating docs. Only activate when re-deploying a docs update to GitHub
 deploydocs(
     repo="https://github.com/antonyorton/PileResponse.jl.git",
 )
