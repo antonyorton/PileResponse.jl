@@ -80,7 +80,7 @@ function get_pile_load_displacement(cpt_datafile::AbstractString, pile_length::F
 
     # Pile head loads
     pile_head_loads = 0.01:0.001:0.95*pile_ult_load_MN
-    # Pile head displacemet
+    # Pile head displacement
     displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load_MN)
 
     # show a table of the data
