@@ -22,7 +22,9 @@ function find_cpt_column_names(names::Vector{SubString{String}})
     qc_col = [item for item in names if occursin("qc", lowercase(item))][1]
     fs_col = [item for item in names if occursin("fs", lowercase(item))][1]
     u2_col = [item for item in names if occursin("u2", lowercase(item))][1]
-    return [depth_col, qc_col, fs_col, u2_col]
+    temp = [depth_col, qc_col, fs_col, u2_col]
+    # Return as Vector{String} instead of Vector{SubString{String}}
+    return [String(item) for item in temp]
 end
 
 """
