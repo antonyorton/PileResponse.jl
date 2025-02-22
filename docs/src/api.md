@@ -1,5 +1,34 @@
 # API
 
+## Index of functions
+
+- [`find_cpt_column_names`](@ref)
+- [`get_least_squares_interpolator`](@ref)
+- [`show_table`](@ref)
+- [`get_pile_head_displacement`](@ref)
+- [`get_initial_pile_head_stiffness`](@ref)
+- [`get_soil_type_CPT2012`](@ref)
+- [`get_kc_base_CPT2012`](@ref)
+- [`get_ultimate_shaft_load`](@ref)
+- [`get_ultimate_shaft_resistance`](@ref)
+- [`get_fsmax_shaft_CPT2012`](@ref)
+- [`get_alpha_shaft_CPT2012`](@ref)
+- [`get_fsol_shaft_CPT2012`](@ref)
+- [`get_average_qc_at_pile_base`](@ref)
+- [`get_E0`](@ref)
+- [`get_Vs`](@ref)
+- [`get_Ic`](@ref)
+- [`get_bigQt`](@ref)
+- [`get_Fr`](@ref)
+- [`get_Rf`](@ref)
+- [`get_qn`](@ref)
+- [`get_qt`](@ref)
+- [`get_sigmav0_effective`](@ref)
+- [`get_sigmav0_total`](@ref)
+- [`read_delimited_text_file`](@ref)
+
+## Function details
+
 ```@docs
 find_cpt_column_names
 get_least_squares_interpolator

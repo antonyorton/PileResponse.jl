@@ -1,11 +1,19 @@
 # [Introduction](@id PileResponse.jl)
 
-To add the package: `Pkg> add "https://github.com/antonyorton/PileResponse.jl"`
-
 ```@contents
-Pages = ["index.md", "tutorial.md", "api.md"]
-Depth = 3
+Pages = ["tutorial.md", "api.md"]
+Depth = 1
 ```
+
+## Installation
+
+To install the package, activate the package REPL by pressing `]`. Then run:
+
+```
+Pkg> add "https://github.com/antonyorton/PileResponse.jl"
+```
+
+## About PileResponse.jl
 
 [PileResponse.jl](https://github.com/antonyorton/PileResponse.jl) is a module designed for the assessment of the load-deflection response of a pile head under static vertical load. The assessment depends on the pile type and the results of a single cone penetrometer test (CPT) conducted to at least the design toe level of the pile.\
 \
@@ -25,31 +33,3 @@ Mayne, P. W. (2001). Stress-strain-strength-flow parameters from enhanced in-sit
 \
 Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC
 \
-\
-
-## Index of functions
-
-- [`find_cpt_column_names`](@ref)
-- [`get_least_squares_interpolator`](@ref)
-- [`show_table`](@ref)
-- [`get_pile_head_displacement`](@ref)
-- [`get_initial_pile_head_stiffness`](@ref)
-- [`get_soil_type_CPT2012`](@ref)
-- [`get_kc_base_CPT2012`](@ref)
-- [`get_ultimate_shaft_load`](@ref)
-- [`get_ultimate_shaft_resistance`](@ref)
-- [`get_fsmax_shaft_CPT2012`](@ref)
-- [`get_alpha_shaft_CPT2012`](@ref)
-- [`get_fsol_shaft_CPT2012`](@ref)
-- [`get_average_qc_at_pile_base`](@ref)
-- [`get_E0`](@ref)
-- [`get_Vs`](@ref)
-- [`get_Ic`](@ref)
-- [`get_bigQt`](@ref)
-- [`get_Fr`](@ref)
-- [`get_Rf`](@ref)
-- [`get_qn`](@ref)
-- [`get_qt`](@ref)
-- [`get_sigmav0_effective`](@ref)
-- [`get_sigmav0_total`](@ref)
-- [`read_delimited_text_file`](@ref)

@@ -190,15 +190,15 @@ end
 
 
 """
-    get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_toe_depth::Float64)\n
+    get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_length::Float64)\n
     returns the ultimate shaft load for the pile (MN)
 
 `fshaft_MPa` is the ultimate shaft resistance (MPa) for each node corresponding to the `depth_m` vector.
 """
-function get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_toe_depth::Float64)
+function get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_length::Float64)
     ult_shaft_MN = 0.0
     for i in eachindex(depth_m)
-        depth_m[i] > pile_toe_depth && break
+        depth_m[i] > pile_length && break
         if i > 1
             ult_shaft_MN += pi * pile_diameter * (depth_m[i] - depth_m[i-1]) *
                             0.5 * (fshaft_MPa[i] + fshaft_MPa[i-1])
@@ -326,19 +326,19 @@ end
 
 
 """
-	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_toe_depth::Float64, pile_diameter::Float64; clip_to_30pct::Bool = false)\n
+	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_length::Float64, pile_diameter::Float64; clip_to_30pct::Bool = false)\n
 	Returns average qc within +/- 1.5 pile diameters from the toe, with values limited to within +/- 30% of the value at the toe
 
 if `clip_to_30pct` = `false`, values will not be limited to +/- 30% of the value at the toe prior to averaging
 """
-function get_average_qc_at_pile_base(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, pile_toe_depth::Float64, pile_diameter::Float64; clip_to_30pct::Bool=false)
+function get_average_qc_at_pile_base(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, pile_length::Float64, pile_diameter::Float64; clip_to_30pct::Bool=false)
 
     # Get qc values within +/- 1.5 pile diameters from the toe
-    indices = findall(x -> (x >= pile_toe_depth - 1.5 * pile_diameter) & (x <= pile_toe_depth + 1.5 * pile_diameter), depth_m)
+    indices = findall(x -> (x >= pile_length - 1.5 * pile_diameter) & (x <= pile_length + 1.5 * pile_diameter), depth_m)
     base_qcvals = qc_MPa[indices]
 
     # Get qc value at the toe
-    base_qc = qc_MPa[argmin(abs.(depth_m .- pile_toe_depth))]
+    base_qc = qc_MPa[argmin(abs.(depth_m .- pile_length))]
 
 
     # limit base_qc values to 0.7 * qc at toe < x < 1.3 * qc at toe
