@@ -25,8 +25,11 @@ begin
     Pkg.add(url = "https://github.com/antonyorton/PileResponse.jl")
     Pkg.add("PlutoUI")
 	Pkg.add("CairoMakie")
+	Pkg.add("DataInterpolations")
+	Pkg.add("PrettyTables")
 	using PileResponse
 	using DataInterpolations
+	using PrettyTables
 	using PlutoUI
 	using CairoMakie
 	CairoMakie.activate!(type = "svg");
@@ -546,17 +549,22 @@ md"""
 **Pile toe depth:** $(pile_toe_depth) m.\
 """
 
-# ╔═╡ 4e9ccc3b-e977-4f15-b0c5-7c5daca84901
+# ╔═╡ c0733453-cddd-4acf-a22c-710d600a1520
 begin
-	indices = pile_head_loads .< pile_capacity_MN
-	show_table(
-		[pile_head_loads[indices], displacement[indices]],
-		["Load (MN)", "Displacement (m)"],
-		num_rows = 15,
-		printformat = "%8.6f"
-	)
+	# Prepare data
+	num_rows = 12
+	mylen = sum.([pile_head_loads .< pile_capacity_MN])[1]
+	table_indices = collect(1:round(Int64, mylen / (num_rows)):mylen)
+	table_indices[end] = mylen
+	table_data = stack([item[table_indices] for item in [pile_head_loads, displacement]])
+	# Show table
+	pretty_table(
+		HTML,
+		table_data,
+		header=["Load (MN)", "Disp (mm)"],
+		max_num_of_rows=num_rows,
+		formatters=ft_printf("%6.4f"))
 end
-
 
 # ╔═╡ c46f48bb-e03b-4b90-95cb-513039d5416f
 begin
@@ -618,8 +626,23 @@ The load carried by the pile at capacity is $(pile_capacity_MN) MN, comprising:\
  -  $(round(total_base_MN_at_capacity, digits = 3)) MN carried by the base
 """
 
-# ╔═╡ 789627e2-0e67-4692-b750-a155b9f16790
-show_table([-mydepth, myshaftload],["Elevation (m)", "Load (MN)"], num_rows=15, printformat = "%5.3f")
+# ╔═╡ 3182f547-ca71-4b26-9859-45b638a2dd79
+begin
+	# Prepare data
+	num_rows_shaft_load = 15
+	table_indices_shaft_load = 
+		collect(1:round(Int64, length(mydepth) / num_rows_shaft_load):length(mydepth))
+	table_indices_shaft_load[end] = length(mydepth)
+	table_data_shaft_load =
+		stack([-mydepth[table_indices_shaft_load], myshaftload[table_indices_shaft_load]])
+	# Show table
+	pretty_table(
+		HTML,
+		table_data_shaft_load,
+		header=["Elevation (m)", "Load (MN)"],
+		max_num_of_rows=num_rows_shaft_load,
+		formatters=ft_printf("%6.4f"))
+end
 
 # ╔═╡ 4e9ef2a1-e2a0-4209-8eb5-6212fb4fdb5f
 md"""---------------------
@@ -809,9 +832,9 @@ end;
 # ╠═e5af32ab-6eb3-46d5-8a13-6d6efb8c8e9d
 # ╠═4f9e4011-e02e-4fb7-a76f-d4ac0ca3ad43
 # ╠═c232752c-4f7e-4b32-92f0-e793f4838975
-# ╠═741eb051-a7cc-456a-b992-044d0acd460a
+# ╟─741eb051-a7cc-456a-b992-044d0acd460a
 # ╠═8f9a73f7-d3ab-4f05-b5cc-7daeab7afd66
-# ╠═4e9ccc3b-e977-4f15-b0c5-7c5daca84901
+# ╠═c0733453-cddd-4acf-a22c-710d600a1520
 # ╠═c46f48bb-e03b-4b90-95cb-513039d5416f
 # ╟─fef5eba2-7457-4bdf-a889-3650ba38335f
 # ╟─c58cb696-e3f6-441d-81f1-5e4915db081d
@@ -824,8 +847,8 @@ end;
 # ╠═bb86eff9-f3ea-4ade-ae3c-5feeac9d8e34
 # ╟─6c5bdbe9-3253-4f6e-87aa-d62ba21016d2
 # ╟─f2a332dd-c5fa-4a89-a2d7-89818f3f23b3
-# ╟─b1b1c43f-cc35-4c18-a4ff-5ea0fb8996e6
-# ╠═789627e2-0e67-4692-b750-a155b9f16790
+# ╠═b1b1c43f-cc35-4c18-a4ff-5ea0fb8996e6
+# ╠═3182f547-ca71-4b26-9859-45b638a2dd79
 # ╟─4e9ef2a1-e2a0-4209-8eb5-6212fb4fdb5f
 # ╟─c0be21b4-a70a-4dc5-b2b9-dba8ff243a99
 # ╟─dc5cb03e-2fda-4f0c-a580-0deada74707d

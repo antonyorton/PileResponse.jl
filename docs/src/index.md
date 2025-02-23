@@ -31,5 +31,5 @@ Randolph, M. F. and Wroth, C. P. (1978). Analysis of deformation of vertically l
 \
 Mayne, P. W. (2001). Stress-strain-strength-flow parameters from enhanced in-situ tests. Proc. Int. Conf. In-Situ Measurement of Soil Properties and Case Histories. Bali, Indonesia, 27 - 48.\
 \
-Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC
+Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC.
 \

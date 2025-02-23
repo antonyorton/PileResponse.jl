@@ -1,12 +1,11 @@
 """
-module **MyFullCalc**\\
+module **FastSolve**\\
 With this module you can:\\
      - calculate the pile ultimate load in one step via `get_pile_ultimate_load_MN()`\\
      - calculate the pile load response in one step via `get_pile_load_displacement()`
 """
-module MyFullCalc
+module FastSolve
 
-using PrettyTables
 using Printf
 import PileResponse as prs
 
@@ -23,7 +22,8 @@ end
 
 """
     get_pile_load_displacement(cpt_datafile::AbstractString, pile_length::Float64, pile_diameter::Float64; Epile::Int64=30000, pile_type::String="Driven pile - steel closed ended", gamma_soil::Float64=18.5, gw_depth::Float64=3.0, Poisson_ratio::Float64=0.3)
-returns an array with column 1 = load (MN) and column 2 = displacement (m).
+
+Return `[load (MN), displacement (m)]`.
 
 Allowable pile types:\\
 -----------------------------------------\\
@@ -83,27 +83,14 @@ function get_pile_load_displacement(cpt_datafile::AbstractString, pile_length::F
     # Pile head displacement
     displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load_MN)
 
-    # show a table of the data
-    if 1 == 2
-        mylen = length(pile_head_loads)
-        table_indices = 1:round(Int64, mylen / 12):mylen
-        table_data = stack([item[table_indices] for item in [pile_head_loads, displacement]])
-
-        pretty_table(
-            stdout,
-            table_data,
-            header=["Load (MN)", "Disp (mm)"],
-            max_num_of_rows=15,
-            formatters=ft_printf("%6.4f"))
-    end
-
     return stack([pile_head_loads, displacement])
 end
 
 
 """
     get_pile_ultimate_load_MN(cpt_datafile::AbstractString, pile_length::Float64, pile_diameter::Float64; Epile::Int64=30000, pile_type::String="Driven pile - steel closed ended", gamma_soil::Float64=18.5, gw_depth::Float64=3.0, Poisson_ratio::Float64=0.3)
-returns the ultimate pile load in MN
+
+Return the ultimate pile load in MN.
 
 Allowable pile types:\\
 -----------------------------------------\\
@@ -135,18 +122,6 @@ function get_pile_ultimate_load_MN(cpt_datafile::AbstractString, pile_length::Fl
     fs_MPa = data[fs_col] * 0.001
     u2_MPa = data[u2_col] * 0.001
 
-    # show a table of the data
-    if 1 == 2
-        mylen = length(depth_m)
-        table_indices = 1:round(Int64, mylen / (2 * pile_length + 1)):mylen
-        table_data = stack([item[table_indices] for item in [depth_m, qc_MPa, fs_MPa, u2_MPa]])
-
-        pretty_table(
-            stdout,
-            table_data,
-            header=[depth_col, qc_col, fs_col, u2_col],
-            max_num_of_rows=15)
-    end
 
     # Get Ic, Vs and E0
     Ic = prs.get_Ic(depth_m, qc_MPa, fs_MPa, u2_MPa, gw_depth, gamma=gamma_soil, a=0.73)

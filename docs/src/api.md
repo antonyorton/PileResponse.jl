@@ -4,7 +4,7 @@
 
 - [`find_cpt_column_names`](@ref)
 - [`get_least_squares_interpolator`](@ref)
-- [`show_table`](@ref)
+- [`get_load_vs_depth`](@ref)
 - [`get_pile_head_displacement`](@ref)
 - [`get_initial_pile_head_stiffness`](@ref)
 - [`get_soil_type_CPT2012`](@ref)
@@ -32,7 +32,7 @@
 ```@docs
 find_cpt_column_names
 get_least_squares_interpolator
-show_table
+get_load_vs_depth
 get_pile_head_displacement
 get_initial_pile_head_stiffness
 get_soil_type_CPT2012

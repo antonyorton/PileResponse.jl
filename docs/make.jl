@@ -22,6 +22,9 @@ makedocs(;
     repo=Remotes.GitHub("antonyorton", "PileResponse.jl")
 )
 
+# NOTE: The docs are run by navigating to the docs folder in the terminal and running:
+#       > julia --project make.jl
+
 # WARNING: An error occurs if the remote repo has been imported into
 #          the base Julia environment. Best to avoid, or use pkg> develop "https://github ..
 

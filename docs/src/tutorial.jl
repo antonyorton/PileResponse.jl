@@ -7,8 +7,9 @@
 # import PileResponse as prs
 # ```
 
-push!(LOAD_PATH, "../../src/") #hide
+push!(LOAD_PATH, "../../src/") # Line not needed if package is added as above
 import PileResponse as prs #hide
+using PrettyTables
 using CairoMakie
 CairoMakie.activate!(type="svg");
 
@@ -46,8 +47,8 @@ ax1 = Axis(fig1[1, 1], title="qc (MPa)", xlabel="qc (MPa)", ylabel="Elevation (m
 ax2 = Axis(fig1[1, 2], title="fs (kPa)", xlabel="fs (kPa)", yticks=(-round(depth_m[end] + 1):0));
 ax3 = Axis(fig1[1, 3], title="u2 (kPa)", xlabel="u2 (kPa)", yticks=(-round(depth_m[end] + 1):0));
 lines!(fig1[1, 1], qc_MPa, -depth_m);
-lines!(fig1[1, 2], fs_MPa, -depth_m);
-lines!(fig1[1, 3], qc_MPa, -depth_m);
+lines!(fig1[1, 2], 1000 * fs_MPa, -depth_m);
+lines!(fig1[1, 3], 1000 * u2_MPa, -depth_m);
 # Note that the code for creating plots will be hidden from now on. For help with plotting using CairoMakie, refer to the docs at [https://docs.makie.org/stable/](https://docs.makie.org/stable/).
 fig1
 
@@ -238,13 +239,43 @@ lines!(figDisp[1, 1], displacement[plot_indicies], pile_head_loads[plot_indicies
 figDisp #hide
 
 # ### Table of results
-table_indices = pile_head_loads .< pile_capacity_MN
-prs.show_table(
-    [pile_head_loads[table_indices], displacement[table_indices]],
-    ["Load (MN)", "Displacement (m)"],
-    num_rows=10,
-    printformat="%5.3f"
-)
+## Prepare data
+num_rows = 10
+mylen = sum.([pile_head_loads .< pile_capacity_MN])[1]
+table_indices = collect(1:round(Int64, mylen / (num_rows)):mylen)
+table_indices[end] = mylen
+table_data = stack([item[table_indices] for item in [pile_head_loads, displacement]])
+## Show table
+pretty_table(
+    HTML,
+    table_data,
+    header=["Load (MN)", "Disp (mm)"],
+    max_num_of_rows=num_rows,
+    formatters=ft_printf("%6.4f"))
+
+
 
 # ## Load carried by pile shaft at capacity
-# More to come soon ...
+# We can now view the load carried by the pile with depth.\
+# We set the applied load as the pile capacity
+applied_load = pile_capacity_MN;
+# Then calculate the load versus depth
+mydepth, myload = prs.get_load_vs_depth(depth_m, qc_MPa, Ic, applied_load, pile_ult_load, pile_length, pile_diameter, pile_type);
+# ### Load versus depth at pile capacity
+figLoadDepth = Figure(size=(500, 700)) #hide
+Axis(figLoadDepth[1, 1],
+    xticks=(0:0.25:(round(pile_capacity_MN)+0.5)),
+    yticks=(-round(depth_m[end] + 1):0),
+    limits=((0, round(pile_capacity_MN) + 0.5), (-pile_length - 1, 0)),
+    title="Load carried by pile shaft at capacity",
+    xlabel="Load (MN)",
+    ylabel="Elevation (m)") #hide
+lines!(figLoadDepth[1, 1], myload, -mydepth) #hide
+figLoadDepth #hide
+
+# ## Concluding remarks
+# Thank you for following this tutorial.\
+# \
+# If you would like to calculate the pile ultimate load or the load-displacement response with a single function, please see the module `FastSolve.jl` in the GitHub [repository](https://github.com/antonyorton/PileResponse.jl).\
+# \
+# *This tutorial was completed in Sydney, Australia on 23 February 2025.*

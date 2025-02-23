@@ -1,14 +1,46 @@
-using DataInterpolations
 using DelimitedFiles
 using LsqFit
 using Statistics
-using PrettyTables
 
+
+"""
+    get_load_vs_depth(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, applied_load::Float64, pile_ult_load::Float64, pile_length::Float64, pile_diameter::Float64, pile_type::AbstractString)
+
+Returns `[depth, load]`, the load carried by the pile versus depth for a given `applied_load` at the pile head.
+
+# Example
+```julia
+mydepth, myload = get_load_vs_depth(depth_m, qc_MPa, Ic, applied_load, pile_ult_load, pile_length, pile_diameter, pile_type)
+```
+"""
+function get_load_vs_depth(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, applied_load::Float64, pile_ult_load::Float64, pile_length::Float64, pile_diameter::Float64, pile_type::AbstractString)
+
+    load_factor = applied_load / pile_ult_load
+
+    if load_factor > 1.0
+        throw(DomainError(applied_load, "applied_load cannot be greater than pile_ult_load"))
+    end
+
+    fshaft_factored = get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor=load_factor)
+
+    Qshaft_factored = append!([0.0], pi * pile_diameter * (depth_m[2:end] .- depth_m[1:end-1]) .* 0.5 .* (fshaft_factored[2:end] .+ fshaft_factored[1:end-1]))
+
+    mydepth = depth_m[depth_m.<=pile_length]
+    myshaftload = zeros(Float64, length(mydepth))
+    myshaftload[1] = load_factor * pile_ult_load
+    for i = 2:length(mydepth)
+        myshaftload[i] = myshaftload[i-1] - Qshaft_factored[i]
+    end
+
+    return [mydepth, myshaftload]
+end
 
 """
     find_cpt_column_names(names::Vector{SubString{String}})
 
-    Returns a vector `[depth_col, qc_col, fs_col, u2_col]` providing the relevant names for each item from `names`.\n The function looks for the strings "depth", "qc", "fs" and "u2" within the items in `names`. It is not case sensitive.
+Return a vector `[depth_col, qc_col, fs_col, u2_col]` providing the relevant names for each item from `names`.
+    
+The function looks for the (non case sensitive) strings "depth", "qc", "fs" and "u2" within the items in `names`.
 
 # Example
 ```julia
@@ -30,8 +62,9 @@ end
 """
 	get_least_squares_interpolator(xvals::AbstractVector, yvals::AbstractVector; p0::AbstractVector = [0.0,0.0])
 
-	Returns a function `fun()` such that `fun(x) = mx + b` is the least squares linear approximation to [xvals, yvals]\n
-`p0 [Float64, Float64]` is the initial guess, and `[0.0, 0.0]` seems to work
+Return a function `fun()` such that `fun(x) = mx + b` is the least squares linear approximation to [xvals, yvals].
+
+- `p0 [Float64, Float64]` is the initial guess, and `[0.0, 0.0]` seems to work.
 """
 function get_least_squares_interpolator(xvals::AbstractVector, yvals::AbstractVector; p0::AbstractVector=[0.0, 0.0])
     linearmodel(x, p) = p[1] * x .+ p[2] # define a linear model y = mx + b,  (p = [m,b])
@@ -41,47 +74,55 @@ function get_least_squares_interpolator(xvals::AbstractVector, yvals::AbstractVe
 end
 
 
-"""
-    function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
+# """
+#     show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
 
-	Show a formatted table in HTML with given column data and headers. 
+# Display a formatted table in HTML with given column data and headers. 
 
-`columns` = `[col1data, col2data, ..]` a list of vectors with the data for each column\\
-`header` = `["col1 name", "col2 name", ...]` a list of strings with the column names
-"""
-function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
-    tabledata = stack(columns)
-    n_total = length(tabledata[:, 1])
-    indices = Int64.(1.0:floor(n_total / (num_rows - 1)):n_total+1)
-    indices[end] = min.(n_total, indices[end])
-    return pretty_table(HTML, tabledata[indices, :], formatters=ft_printf(printformat), header=header)
-end
+# # Arguments
+# - `columns` = `[col1data, col2data, ..]` a list of vectors with the data for each column.
+# - `header` = `["col1 name", "col2 name", ...]` a list of strings with the column names.
+# """
+# function show_table(columns::AbstractArray, header::AbstractVector{String}; num_rows::Int64=5, printformat="%5.3f")
+#     tabledata = stack(columns)
+#     n_total = length(tabledata[:, 1])
+#     indices = Int64.(1.0:floor(n_total / (num_rows - 1)):n_total+1)
+#     indices[end] = min.(n_total, indices[end])
+#     return pretty_table(HTML, tabledata[indices, :], formatters=ft_printf(printformat), header=header)
+# end
 
 """
     list_available_pile_types()
-    Returns a list of the available pile types which can be used in the analysis
+
+Return a list of the available pile types which can be used in the analysis.
 """
 function list_available_pile_types()
     return sort(collect(keys(get_alpha_shaft_CPT2012())))
 end
 
 """
-	get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_resistance::Float64)\n
-	Returns the pile head displacement for the given load vector
+	get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_load::Float64)
 
-The assumption is that the pile head stiffness k for a given load P can be approximated as
+Return the pile head displacement for the given load vector.
 
- - ``k = k_{0}(1 - (P/P_{ult})^{0.3})``\n
-For further details see:\n
- - Mayne, P. W. (2001) Stress-strain-strength flow parameters from enhanced in-situ tests.\n 
+# Arguments
+- `k0::Float64` is the initial pile head stiffness.
+- `pile_head_loads::AbstractVector{Float64}` is a vector of the load applied at the pile head. It will be sorted into increasing order.
+- `pile_ult_load::Float64` is the assessed ultimate load of the pile.
+
+See also [`get_initial_pile_head_stiffness`](@ref).
+
+The assumption is that the pile head stiffness k for a given load P can be approximated as:
+
+ - ``k = k_{0}(1 - (P/P_{ult})^{0.3})``.
+
+
+# Reference
+ - Mayne, P. W. (2001) Stress-strain-strength flow parameters from enhanced in-situ tests. 
  - Fahey, M. and Carter, J. P. (1993) A finite element study of the pressuremeter in sand using a nonlinear elastic plastic model.
-\n
-`k0` is the initial, or small strain, pile head stiffness\\
-`pile_head_loads` is a vector of the load applied at the pile head. It will be sorted into increasing order.\\
-`pile_ult_resistance` is the assessed ultimate load capacity of the pile
 
 """
-function get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_resistance::Float64)
+function get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector{Float64}, pile_ult_load::Float64)
 
     # function defining the reduction of k with load
     kdecay(u) = 1 - u^0.3
@@ -89,7 +130,7 @@ function get_pile_head_displacement(k0::Float64, pile_head_loads::AbstractVector
     pvals = append!([0.0], sort(pile_head_loads))
     pmid = 0.5 * (pvals[2:end] .+ pvals[1:end-1]) #midpoint loads
 
-    kvals = k0 * kdecay.(pmid / pile_ult_resistance)
+    kvals = k0 * kdecay.(pmid / pile_ult_load)
 
     displacement = pvals[2:end] ./ kvals
 
@@ -98,17 +139,21 @@ end
 
 
 """
-	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64 = 0.3)\n
+	get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64 = 0.3)
 
-	Returns the initial, or small strain, pile head stiffness (MN/m)
+Return the initial pile head stiffness for small strain (MN/m).
 
-The theory is based on the closed form elastic solution provided by Randolph and Wroth (1978), *Analysis of deformation of vertically loaded piles.*\n
-The theory assumes that the soil has a linearly increasing elastic modulus with depth.
+# Arguments
+- `Epile (MPa)` is the elastic modulus of the pile.
+- `Esoil_L (MPa)` is the small strain (E₀) elastic modulus of the soil at the base of the pile shaft.
+- `Esoil_Lon2 (MPa)` is the small strain (E₀) elastic modulus of the soil at the midpoint of the pile shaft.
+- `ν` (input as \\nu[tab]) is the Poisson's ratio of the soil.
 
-`Epile (MPa)` is the elastic modulus of the pile\\
-`Esoil_L (MPa)` is the small strain (E₀) elastic modulus of the soil at the base of the pile shaft\\
-`Esoil_Lon2 (MPa)` is the small strain (E₀) elastic modulus of the soil at the midpoint of the pile shaft\\
-`ν` (input as \\nu[tab]) is the Poisson's ratio of the soil
+The theory is based on the closed form elastic solution provided by Randolph and Wroth (1978). The theory assumes that the soil has a linearly increasing elastic modulus with depth.
+
+# Reference
+- Randolph, M. F. and Wroth, C. P. (1978). Analysis of deformation of vertically loaded piles. Jnl. Geot. Eng. Divn., ASCE, 108 (GT12): 1465 - 1488.
+
 """
 function get_initial_pile_head_stiffness(pile_length::Float64, pile_diameter::Float64, Epile::Int64, Esoil_L::Float64, Esoil_Lon2::Float64; ν::Float64=0.3)
 
@@ -141,13 +186,13 @@ end
 
 
 """
-	get_soil_type_CPT2012(Ic::AbstractVector{Float64})\n
+	get_soil_type_CPT2012(Ic::AbstractVector{Float64})
 
-	Returns vector of soil types for use in CPT2012 capacity assessment:
-		1 = silts and clays (Ic = 2.60 - 3.0)
-		2 = intermediate soil (Ic = 2.05 - 2.60)
-		3 = sands (Ic = 0.0 - 2.05)
+Return a vector of soil types (deonted by 1, 2 or 3) for use in CPT2012 capacity assessment:
 
+- 1 = Silts and clays (Ic = 2.60 - 3.0).
+- 2 = Intermediate soil (Ic = 2.05 - 2.60).
+- 3 = Sands (Ic = 0.0 - 2.05).
 """
 function get_soil_type_CPT2012(Ic::AbstractVector{Float64})
 
@@ -161,12 +206,19 @@ end
 
 
 """
-    get_kc_base_CPT2012()\n
-	Returns a dictionary with pile base resistance kc factors such that Qult_base = kc * qca, where qca is the equivalent average cone resistance at base (see: get_average_qc_at_pile_base()).\n
-`Keys`: pile types\\
-`Values`: kc factors for [silt/clay, intermediate soils, sands]
+    get_kc_base_CPT2012()
 
-Reference: Frank. R. (2017) Some aspects of pile design in France
+Return a dictionary with pile base resistance factors ``k_{c}`` such that:
+
+``Q_{ult(base)} = k_{c} \\cdot q_{ca}``, where ``q_{ca}`` is the equivalent average cone resistance at the pile base.
+
+- `Keys`: pile types.
+- `Values`: ``k_{c}`` factors for [silt/clay, intermediate soils, sands].
+
+See also [`get_average_qc_at_pile_base`](@ref).
+
+# Reference
+- Frank, R. (2017). Some aspects of research and practice for pile design in France. Innov. Infrastruct. Solutions. 2 (32) 1 - 15.
 """
 function get_kc_base_CPT2012()
 
@@ -192,8 +244,9 @@ end
 
 
 """
-    get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_length::Float64)\n
-    returns the ultimate shaft load for the pile (MN)
+    get_ultimate_shaft_load(depth_m::AbstractVector{Float64}, fshaft_MPa::AbstractVector{Float64}, pile_diameter::Float64, pile_length::Float64)
+
+Return the ultimate shaft load for the pile (MN).
 
 `fshaft_MPa` is the ultimate shaft resistance (MPa) for each node corresponding to the `depth_m` vector.
 """
@@ -211,11 +264,20 @@ end
 
 
 """
-	get_ultimate_shaft_resistance(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, pile_type::String; factor::Float64 = 1.0)\n
+	get_ultimate_shaft_resistance(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, pile_type::String; factor::Float64 = 1.0)
 
-	Returns the shaft resistance (MPa) for each element.
+Return the ultimate shaft resistance (MPa) for each element. The method follows the approach described by Frank (2017) where:
+- ``f_{s} = \\alpha\\cdot f_{sol}``, with ``f_{sol} \\leq f_{smax}``
+        
+Set `factor` = 1.0 for ultimate resistance and `factor` < 1.0 for loads less than the ultimate load.
 
-Set `factor` = 1.0 for ultimate resistance, and `factor` < 1.0 for resistances below the ultimate load
+See also:
+- [`get_fsol_shaft_CPT2012`](@ref)
+- [`get_alpha_shaft_CPT2012`](@ref)
+- [`get_fsmax_shaft_CPT2012`](@ref)
+
+# Reference
+- Frank, R. (2017). Some aspects of research and practice for pile design in France. Innov. Infrastruct. Solutions. 2 (32) 1 - 15.
 """
 function get_ultimate_shaft_resistance(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, pile_type::String; factor::Float64=1.0)
     if (factor > 1.0) || (factor < 0.0)
@@ -236,13 +298,17 @@ end
 
 
 """
-    get_fsmax_shaft_CPT2012()\n
-    Returns a dictionary with maximum pile shaft resistance values fsmax,
-		such that `Qult_shaft <= fsmax`.\n
-`Keys`: pile types\\
-`Values`: maximum shaft resistance fsmax(kPa) for [silt/clay, intermediate soils, sands]
+    get_fsmax_shaft_CPT2012()
+    
+Return a dictionary with maximum pile shaft resistance values ``f_{smax}``, such that:
 
-Reference: Frank. R. (2017) Some aspects of pile design in France
+``Q_{ult(shaft)} \\leq f_{smax}``.
+
+- `Keys`: Pile types.
+- `Values`: Maximum shaft resistance ``f_{smax}`` (kPa) for [silt/clay, intermediate soils, sands].
+
+# Reference
+- Frank, R. (2017). Some aspects of research and practice for pile design in France. Innov. Infrastruct. Solutions. 2 (32) 1 - 15.
 """
 function get_fsmax_shaft_CPT2012()
 
@@ -268,13 +334,19 @@ end
 
 
 """
-    get_alpha_shaft_CPT2012()\n
-    Returns a dictionary with pile shaft resistance α factors,
-		such that Qult_shaft = α * fsol (see: get_fsol_shaft_CPT2012()).\n
-`Keys`: pile types\\
-`Values`: alpha factors for [silt/clay, intermediate soils, sands]
+    get_alpha_shaft_CPT2012()
+    
+Return a dictionary with pile shaft resistance ``\\alpha`` factors, such that:
 
-Reference: Frank. R. (2017) Some aspects of pile design in France
+``Q_{ult(shaft)} = \\alpha \\cdot f_{sol}``
+
+- `Keys`: Pile types.
+- `Values`: ``\\alpha`` factors for [silt/clay, intermediate soils, sands].
+
+See also: [`get_fsol_shaft_CPT2012`](@ref).
+
+# Reference
+- Frank, R. (2017). Some aspects of research and practice for pile design in France. Innov. Infrastruct. Solutions. 2 (32) 1 - 15.
 """
 function get_alpha_shaft_CPT2012()
 
@@ -303,12 +375,16 @@ end
 
 
 """
-    get_fsol_shaft_CPT2012(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64})\n
-    Returns fsol(kPa)::Vector the unfactored ultimate pile shaft resistance.
+    get_fsol_shaft_CPT2012(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64})
+    
+Return ``f_{sol}`` (kPa), the unfactored ultimate pile shaft resistance.
 
-`Ic` is CPT soil behaviour type index
+`Ic` is the CPT soil behaviour type index. If `Ic` is not available, provide a vector of the same length as `qc_MPa` with values 1, 2 or 3 depending on whether the soil is silt/clay, intermediate or sand respectively for each point.
 
-Reference: Frank. R. (2017) Some aspects of pile design in France
+See also [`get_Ic`](@ref)
+
+# Reference
+- Frank, R. (2017). Some aspects of research and practice for pile design in France. Innov. Infrastruct. Solutions. 2 (32) 1 - 15.
 """
 function get_fsol_shaft_CPT2012(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64})
 
@@ -328,10 +404,11 @@ end
 
 
 """
-	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_length::Float64, pile_diameter::Float64; clip_to_30pct::Bool = false)\n
-	Returns average qc within +/- 1.5 pile diameters from the toe, with values limited to within +/- 30% of the value at the toe
+	get_average_qc_at_pile_base(depth_m::AbstractVector{Float64},qc_MPa::AbstractVector{Float64}, pile_length::Float64, pile_diameter::Float64; clip_to_30pct::Bool = false)
 
-if `clip_to_30pct` = `false`, values will not be limited to +/- 30% of the value at the toe prior to averaging
+Return the average `qc` within +/- 1.5 pile diameters from the base, with values limited to within +/- 30% of the value at the base.
+
+If `clip_to_30pct` = `false`, values will not be limited to +/- 30% of the value at the pile base prior to averaging.
 """
 function get_average_qc_at_pile_base(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, pile_length::Float64, pile_diameter::Float64; clip_to_30pct::Bool=false)
 
@@ -359,10 +436,16 @@ end
 
 
 """
-	get_E0(Vs::AbstractVector{Float64}; gamma::Float64 = 18.0, ν::Float64 = 0.3)\n
-	returns `E₀(MPa) = 2 * (1 + ν) * gamma / 9.81 * Vs² * 0.001`
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
-`ν` is the Poisson's ratio
+	get_E0(Vs::AbstractVector{Float64}; gamma::Float64 = 18.0, ν::Float64 = 0.3)
+	
+Return `E₀(MPa) = 2 * (1 + ν) * gamma / 9.81 * Vs² * 0.001`.
+
+# Arguments
+- `Vs` is the shear wave velocity.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `ν` is the soil Poisson's ratio, which is assumed constant.
+
+See also [`get_Vs`](@ref).
 """
 function get_E0(Vs::AbstractVector{Float64}; gamma::Float64=18.0, ν::Float64=0.3)
     return 2 * (1 + ν) * gamma / 9.81 * Vs .^ 2 * 0.001
@@ -370,12 +453,17 @@ end
 
 
 """
-	get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\n
-	returns `(αᵥₛ * qn / pa)^0.5`
-		where `αᵥₛ = 10^(0.55 * Ic + 1.68)`
-`gw_depth` is depth to groundwater in metres\\
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85\\
+	get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return `(αᵥₛ * qn / pa)^0.5` where `αᵥₛ = 10^(0.55 * Ic + 1.68)`.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
+
+# Reference
+- Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC.
 """
 function get_Vs(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     pa = 0.101 #atmospheric pressure (MPa)
@@ -388,11 +476,18 @@ end
 
 """
 	get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64},
-    fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
-	returns `[(3.47 - log10(Qt))² + (log10(Fr) + 1.22)²]^0.5`
-`gw_depth` is depth to groundwater in metres\\
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85
+    fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return the soil behaviour type index:
+- `Ic = [(3.47 - log10(Qt))² + (log10(Fr) + 1.22)²] ^ 0.5`.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
+
+# Reference
+- Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC.
 """
 function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     Qt = get_bigQt(depth_m, qc_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
@@ -409,12 +504,14 @@ end
 
 
 """
-	get_bigQt(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gw_depth::Float64, gamma::Float64 = 18.0, a::Float64 = 0.73)\\
-	returns `Qₜ = (qₜ - σᵥ₀) / σ'ᵥ₀`\\
+	get_bigQt(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gw_depth::Float64, gamma::Float64 = 18.0, a::Float64 = 0.73)
 
-`gw_depth` is depth to groundwater in metres\\
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`\\
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85
+Return `Qₜ = (qₜ - σᵥ₀) / σ'ᵥ₀`.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
 """
 function get_bigQt(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     qt = get_qt(qc_MPa, u2_MPa, a=a)
@@ -425,10 +522,13 @@ end
 
 
 """
-	function get_Fr(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64},u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
-	returns `(fₛ / qₙ) * 100`
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`
+	get_Fr(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64},u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return `(fₛ / qₙ) * 100`.
+
+# Arguments
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
 """
 function get_Fr(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gamma::Float64=18.0, a::Float64=0.73)
     qn_MPa = get_qn(depth_m, qc_MPa, u2_MPa, gamma=gamma, a=a)
@@ -437,10 +537,11 @@ end
 
 
 """
-	get_Rf(qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64 = 0.73)\\
-	Returns `(fₛ / qₜ) * 100`
+	get_Rf(qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64 = 0.73)
 
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85
+Return `(fₛ / qₜ) * 100`.
+
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
 """
 function get_Rf(qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64=0.73)
     qt_MPa = get_qt(qc_MPa, u2_MPa, a=a)
@@ -449,10 +550,13 @@ end
 
 
 """
-	function get_qn(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)\\
-	returns qₙ = qt - σᵥ₀
-`a` is the net area ratio of the cone, typically between 0.70 and 0.85
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`
+	get_qn(depth_m::AbstractVector{Float64},  qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return `qₙ = qt - σᵥ₀`.
+
+# Arguments
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
 """
 function get_qn(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gamma::Float64=18.0, a::Float64=0.73)
     qt_MPa = get_qt(qc_MPa, u2_MPa, a=a)
@@ -462,10 +566,11 @@ end
 
 
 """
-	get_qt(qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64 = 0.73)\\
-	Returns `qt = qc + u2(1 - a)`
+	get_qt(qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64 = 0.73)
+	
+Return `qt = qc + u2(1 - a)`.
 
-where `a` is the net area ratio of the cone, typically between 0.70 and 0.85
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
 """
 function get_qt(qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; a::Float64=0.73)
     return qc_MPa .+ u2_MPa .* (1 - a)
@@ -473,11 +578,13 @@ end
 
 
 """
-	get_sigmav0_effective(depth_m::AbstractVector{Float64}, gw_depth::Float64, gamma::Float64 = 18.0)\\
-	Returns the effective vertical stress σ'ᵥ₀(MPa) 
+	get_sigmav0_effective(depth_m::AbstractVector{Float64}, gw_depth::Float64, gamma::Float64 = 18.0)
 
-`gw_depth` is depth to groundwater in metres\\
-`gamma` is soil unit weight in kN/m², assumed constant over `depth_m`
+Return the effective vertical stress `σ'ᵥ₀` (MPa).
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
 """
 function get_sigmav0_effective(depth_m::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0)
 
@@ -489,10 +596,11 @@ end
 
 
 """
-	get_sigmav0_total(depth_m::AbstractVector{Float64}; gamma::Float64 = 18.0)\\
-	Returns the total vertical stress σᵥ₀(MPa)
+	get_sigmav0_total(depth_m::AbstractVector{Float64}; gamma::Float64 = 18.0)
+	
+Return the total vertical stress `σᵥ₀` (MPa).
 
-`gamma` is unit weight in kN/m²  
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
 """
 function get_sigmav0_total(depth_m::AbstractVector{Float64}; gamma::Float64=18.0)
     return 0.001 * depth_m * gamma
@@ -500,10 +608,14 @@ end
 
 
 """
-    read_delimited_text_file(filepath::String; delim::AbstractChar=',', T::Type=Float64)\\
-	Returns a dictionary `data` such that `data[col1_header] = col1_values`
+    read_delimited_text_file(filepath::String; delim::AbstractChar=',', T::Type=Float64)
+	
+Return a dictionary (`data`) such that:
+- `data[col1_header] = col1_values`.
 
-Read a delimited text file. Assumes the first row is the header and that all columns below the header have the same type.
+Assumes the first row is the header and that all columns below the header have the same type.
+
+- `delim` is the separator, ',' for comma separated, or '\\t' for tab separated values.
 """
 function read_delimited_text_file(filepath::String; delim::AbstractChar=',', T::Type=Float64)
     data, headers = DelimitedFiles.readdlm(filepath, delim, T, header=true)
