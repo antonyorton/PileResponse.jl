@@ -249,7 +249,7 @@ table_data = stack([item[table_indices] for item in [pile_head_loads, displaceme
 pretty_table(
     HTML,
     table_data,
-    header=["Load (MN)", "Disp (mm)"],
+    header=["Load (MN)", "Displacement (m)"],
     max_num_of_rows=num_rows,
     formatters=ft_printf("%6.4f"))
 
@@ -257,18 +257,19 @@ pretty_table(
 
 # ## Load carried by pile shaft at capacity
 # We can now view the load carried by the pile with depth.\
+# \
 # We set the applied load as the pile capacity
 applied_load = pile_capacity_MN;
 # Then calculate the load versus depth
 mydepth, myload = prs.get_load_vs_depth(depth_m, qc_MPa, Ic, applied_load, pile_ult_load, pile_length, pile_diameter, pile_type);
 # ### Load versus depth at pile capacity
 figLoadDepth = Figure(size=(500, 700)) #hide
-Axis(figLoadDepth[1, 1],
-    xticks=(0:0.25:(round(pile_capacity_MN)+0.5)),
-    yticks=(-round(depth_m[end] + 1):0),
-    limits=((0, round(pile_capacity_MN) + 0.5), (-pile_length - 1, 0)),
-    title="Load carried by pile shaft at capacity",
-    xlabel="Load (MN)",
+Axis(figLoadDepth[1, 1], #hide
+    xticks=(0:0.25:(round(pile_capacity_MN)+0.5)), #hide
+    yticks=(-round(depth_m[end] + 1):0), #hide
+    limits=((0, round(pile_capacity_MN) + 0.5), (-pile_length - 1, 0)), #hide
+    title="Load carried by pile shaft at capacity", #hide
+    xlabel="Load (MN)", #hide
     ylabel="Elevation (m)") #hide
 lines!(figLoadDepth[1, 1], myload, -mydepth) #hide
 figLoadDepth #hide

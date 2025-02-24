@@ -561,7 +561,7 @@ begin
 	pretty_table(
 		HTML,
 		table_data,
-		header=["Load (MN)", "Disp (mm)"],
+		header=["Load (MN)", "Displacement (m)"],
 		max_num_of_rows=num_rows,
 		formatters=ft_printf("%6.4f"))
 end

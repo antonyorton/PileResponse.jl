@@ -6,7 +6,7 @@ using Statistics
 """
     get_load_vs_depth(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64}, applied_load::Float64, pile_ult_load::Float64, pile_length::Float64, pile_diameter::Float64, pile_type::AbstractString)
 
-Returns `[depth, load]`, the load carried by the pile versus depth for a given `applied_load` at the pile head.
+Returns `[depth, load]`, which is the `load` carried by the pile at each `depth` for a given `applied_load` at the pile head.
 
 # Example
 ```julia
