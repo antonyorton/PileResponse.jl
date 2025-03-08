@@ -36,7 +36,7 @@ include("functions.jl")
 
 
 function helloworld()
-    print("Hi there PileResponse.js, let's see if it works.\n")
+    print("Hi there PileResponse.js, this function is just to check local updates during development.\n")
     return 123
 end
 

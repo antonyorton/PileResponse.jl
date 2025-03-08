@@ -27,21 +27,21 @@ Return `[load (MN), displacement (m)]`.
 
 Allowable pile types:\\
 -----------------------------------------\\
- "Driven pile - cast in place"\\
- "Driven pile - steel closed ended"\\
- "Driven pile - pre-cast concrete"\\
- "Driven pile - steel H pile"\\
- "Bored pile - with slurry"\\
+ "Bored pile - dry bored pile"\\
+ "Bored pile - no support"\\
  "Bored pile - permanent casing"\\
  "Bored pile - recoverable casing"\\
- "Screw pile - with casing"\\
- "Bored pile - no support"\\
+ "Bored pile - with slurry"\\
  "Bored pile - with slurry and grooved sockets"\\
- "Driven pile - steel open ended"\\
- "Bored pile - dry bored pile"\\
- "Screw pile - cast in place"\\
  "CFA pile"\\
+ "Driven pile - cast in place"\\
  "Driven pile - concrete coated steel"\\
+ "Driven pile - pre-cast concrete"\\
+ "Driven pile - steel H pile"\\
+ "Driven pile - steel closed ended"\\
+ "Driven pile - steel open ended"\\
+ "Screw pile - cast in place"\\
+ "Screw pile - with casing"\\
 """
 function get_pile_load_displacement(cpt_datafile::AbstractString, pile_length::Float64, pile_diameter::Float64; Epile::Int64=30000, pile_type::String="Driven pile - steel closed ended", gamma_soil::Float64=18.5, gw_depth::Float64=3.0, Poisson_ratio::Float64=0.3)
 
@@ -71,9 +71,9 @@ function get_pile_load_displacement(cpt_datafile::AbstractString, pile_length::F
     k0 = prs.get_initial_pile_head_stiffness(pile_length, pile_diameter, Epile, E_L, E_Lon2, ν=Poisson_ratio)
 
     # # results
-    # @printf "E_L = %5.3f MPa\n" E_L
-    # @printf "E_Lon2 = %5.3f MPa\n" E_Lon2
-    # @printf "k0 = %5.3f MN/m\n" k0
+    @printf "E_L = %5.3f MPa\n" E_L
+    @printf "E_Lon2 = %5.3f MPa\n" E_Lon2
+    @printf "k0 = %5.3f MN/m\n" k0
 
     # Get pile ultimate load
     pile_ult_load_MN = get_pile_ultimate_load_MN(cpt_datafile, pile_length, pile_diameter, Epile=Epile, pile_type=pile_type, gamma_soil=gamma_soil, gw_depth=gw_depth, Poisson_ratio=Poisson_ratio)
@@ -94,21 +94,21 @@ Return the ultimate pile load in MN.
 
 Allowable pile types:\\
 -----------------------------------------\\
- "Driven pile - cast in place"\\
- "Driven pile - steel closed ended"\\
- "Driven pile - pre-cast concrete"\\
- "Driven pile - steel H pile"\\
- "Bored pile - with slurry"\\
+ "Bored pile - dry bored pile"\\
+ "Bored pile - no support"\\
  "Bored pile - permanent casing"\\
  "Bored pile - recoverable casing"\\
- "Screw pile - with casing"\\
- "Bored pile - no support"\\
+ "Bored pile - with slurry"\\
  "Bored pile - with slurry and grooved sockets"\\
- "Driven pile - steel open ended"\\
- "Bored pile - dry bored pile"\\
- "Screw pile - cast in place"\\
  "CFA pile"\\
+ "Driven pile - cast in place"\\
  "Driven pile - concrete coated steel"\\
+ "Driven pile - pre-cast concrete"\\
+ "Driven pile - steel H pile"\\
+ "Driven pile - steel closed ended"\\
+ "Driven pile - steel open ended"\\
+ "Screw pile - cast in place"\\
+ "Screw pile - with casing"\\
 """
 function get_pile_ultimate_load_MN(cpt_datafile::AbstractString, pile_length::Float64, pile_diameter::Float64; Epile::Int64=30000, pile_type::String="Driven pile - steel closed ended", gamma_soil::Float64=18.5, gw_depth::Float64=3.0, Poisson_ratio::Float64=0.3)
 
@@ -140,9 +140,9 @@ function get_pile_ultimate_load_MN(cpt_datafile::AbstractString, pile_length::Fl
 
     # Ultimate base load
     # Get qc-avg
-    qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=false)
+    qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=true)
     # Get kc factor
-    kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[depth_m.==pile_length]][1]
+    kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[argmin(abs.(depth_m .- pile_length))]][1]
     # Calculate ultimate base load
     fb_MPa = kc_at_base * qc_avg_base
     ult_base_MN = pi * pile_diameter^2 / 4 * fb_MPa
@@ -151,10 +151,10 @@ function get_pile_ultimate_load_MN(cpt_datafile::AbstractString, pile_length::Fl
     pile_ult_load_MN = ult_base_MN + ult_shaft_MN
 
     # # Print results
-    # @printf "qc_avg_base = %5.3f MPa\n" qc_avg_base
-    # @printf "Ultimate shaft load = %5.3f MN\n" ult_shaft_MN
-    # @printf "Ultimate base load = %5.3f MN\n" ult_base_MN
-    # @printf "Pile ultimate load = %5.3f MN\n" pile_ult_load_MN
+    @printf "qc_avg_base = %5.3f MPa\n" qc_avg_base
+    @printf "Ultimate shaft load = %5.3f MN\n" ult_shaft_MN
+    @printf "Ultimate base load = %5.3f MN\n" ult_base_MN
+    @printf "Pile ultimate load = %5.3f MN\n" pile_ult_load_MN
 
     return pile_ult_load_MN
 end

@@ -190,16 +190,16 @@ end
 
 Return a vector of soil types (deonted by 1, 2 or 3) for use in CPT2012 capacity assessment:
 
-- 1 = Silts and clays (Ic = 2.60 - 3.0).
+- 1 = Silts and clays (Ic > 2.70).
 - 2 = Intermediate soil (Ic = 2.05 - 2.60).
-- 3 = Sands (Ic = 0.0 - 2.05).
+- 3 = Sands (Ic <= 2.50).
 """
 function get_soil_type_CPT2012(Ic::AbstractVector{Float64})
 
     soil_type = Ic[:]
-    soil_type[:] .= 3 # sands (Ic = 0.0 - 2.05)
-    soil_type[Ic.>2.05] .= 2 # intermediate soil (Ic = 2.05 - 2.60)
-    soil_type[Ic.>2.60] .= 1 # silts and clays (Ic = 2.60 - 3.0)
+    soil_type[:] .= 3           # Type 3: sands (Ic <= 2.50)
+    soil_type[Ic.>2.50] .= 2    # Type 2: intermediate soil (Ic = 2.50 - 2.70)
+    soil_type[Ic.>2.70] .= 1    # Type 1: silts and clays (Ic > 2.70)
 
     return Int.(soil_type)
 end
@@ -475,10 +475,10 @@ end
 
 
 """
-	get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64},
+	get_Ic_usingQt_only(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64},
     fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)
 
-Return the soil behaviour type index:
+Return the soil behaviour type index based on Qt (not Qtn):
 - `Ic = [(3.47 - log10(Qt))² + (log10(Fr) + 1.22)²] ^ 0.5`.
 
 # Arguments
@@ -489,7 +489,7 @@ Return the soil behaviour type index:
 # Reference
 - Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC.
 """
-function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+function get_Ic_usingQt_only(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
     Qt = get_bigQt(depth_m, qc_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
     Fr = get_Fr(depth_m, qc_MPa, fs_MPa, u2_MPa, gamma=gamma, a=a)
     Fr[Fr.<0] .= 0.0
@@ -500,6 +500,109 @@ function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64
     Ic[Ic.>3.0] .= 3.0
 
     return Ic
+end
+
+"""
+	get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64},
+    fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return the soil behaviour type index based on Qtn:
+- `Ic = [(3.47 - log10(Qtn))² + (log10(Fr) + 1.22)²] ^ 0.5`.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
+
+# Reference
+- Robertson, P. K. and Cabal, K. (2022). Guide to cone penetration testing. 7th Ed. Gregg Drilling LLC.
+"""
+function get_Ic(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+    Qtn = get_bigQtn(depth_m, qc_MPa, fs_MPa, u2_MPa, gw_depth, gamma=gamma, a=a)
+    Fr = get_Fr(depth_m, qc_MPa, fs_MPa, u2_MPa, gamma=gamma, a=a)
+    Fr[Fr.<0] .= 0.0
+    Qtn[Qtn.<0] .= 0.0
+    Ic = ((3.47 .- log10.(Qtn)) .^ 2 .+ (log10.(Fr) .+ 1.22) .^ 2) .^ 0.5
+    # Deal with troublesome cases
+    Ic[.!isfinite.(Ic)] .= 3.0
+    Ic[Ic.>3.0] .= 3.0
+
+    return Ic
+end
+
+
+"""
+	get_bigQt(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gw_depth::Float64, gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return `Qₜ = (qₜ - σᵥ₀) / σ'ᵥ₀`.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
+"""
+function get_bigQt(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+    qt = get_qt(qc_MPa, u2_MPa, a=a)
+    sigmav0 = get_sigmav0_total(depth_m, gamma=gamma)
+    sigmav0effective = get_sigmav0_effective(depth_m, gw_depth, gamma=gamma)
+    return (qt .- sigmav0) ./ sigmav0effective
+end
+
+
+"""
+	get_bigQtn(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gw_depth::Float64, gamma::Float64 = 18.0, a::Float64 = 0.73)
+
+Return `Qₜ = (qₜ - σᵥ₀) / 0.101 * (0.101 / σ'ᵥ₀) ^n` where\
+        n = 0.381 * Ic + 0.05 * σ'ᵥ₀ / 0.101 - 0.15.
+
+Uses an iterative process.
+
+# Arguments
+- `gw_depth` is depth to groundwater in metres.
+- `gamma` is soil unit weight in kN/m², which is assumed constant.
+- `a` is the net area ratio of the cone, typically between 0.70 and 0.85.
+"""
+function get_bigQtn(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}, gw_depth::Float64; gamma::Float64=18.0, a::Float64=0.73)
+
+    p_atm = 0.101
+    qt = get_qt(qc_MPa, u2_MPa, a=a)
+    sigmav0 = get_sigmav0_total(depth_m, gamma=gamma)
+    sigmav0effective = get_sigmav0_effective(depth_m, gw_depth, gamma=gamma)
+
+    # iteration
+    mse_criteria = 0.01 # termination criteria
+    mse = 1.0 # mean square error on n
+    Fr = get_Fr(depth_m, qc_MPa, fs_MPa, u2_MPa, gamma=gamma, a=a) # get Fr
+
+    # initial guesses
+    n = ones(length(depth_m))
+    Qtn = (qt .- sigmav0) ./ p_atm .* (p_atm ./ sigmav0effective) .^ n
+    Ic = ((3.47 .- log10.(Qtn)) .^ 2 .+ (log10.(Fr) .+ 1.22) .^ 2) .^ 0.5
+
+
+    for i in (1:40)
+        # print("mse = ", round(mse, digits=3), "\n")
+
+        # updated result
+        Ic_new = ((3.47 .- log10.(Qtn)) .^ 2 .+ (log10.(Fr) .+ 1.22) .^ 2) .^ 0.5
+        n_new = 0.381 .* Ic_new .+ 0.05 * (p_atm ./ sigmav0effective) .- 0.15
+        Qtn_new = (qt .- sigmav0) ./ p_atm .* (p_atm ./ sigmav0effective) .^ n_new
+
+        # check mse on n
+        mse = sum((n_new .- n) .^ 2)
+        if mse < mse_criteria
+            # print("mse (final) = ", round(mse, digits=3), "\n")
+            break
+        end
+
+        # save results for next iteration
+        Ic = Ic_new
+        n = n_new
+        Qtn = Qtn_new
+
+    end
+
+    return Qtn
 end
 
 
