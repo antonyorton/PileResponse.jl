@@ -39,7 +39,7 @@ data = prs.read_delimited_text_file("../../data/example_cpt_data.csv", delim=','
 nothing #hide
 ````
 
-We extract the column names and assign the data to variables.
+After reading the text file, we extract the column names and assign the data to variables.
 
 ````@example tutorial
 depth_col, qc_col, fs_col, u2_col = prs.find_cpt_column_names(collect(keys(data)));
@@ -51,7 +51,7 @@ nothing #hide
 ````
 
 ### Plot the CPT data
-Check that the data looks as expected by comparing to pdf reports if available.
+It is recommended to plot the data and check that it looks as expected.
 
 ````@example tutorial
 fig1 = Figure(size=(800, 800));
@@ -71,9 +71,9 @@ fig1
 ````
 
 ## Soil properties and depth to groundwater
-Assign properties which are assumed to be constant over the soil profile. The loss in accuracy from assuming a constant soil unit weight is likely to be acceptable for most situations.
+Here we assign properties which are assumed to be constant over the soil profile. The loss in accuracy from assuming a constant soil unit weight is likely to be acceptable for most situations.
 
-Soil properties
+Soil properties.
 
 ````@example tutorial
 gamma_soil = 20.5; #Soil unit weight (kN/m3)
@@ -81,7 +81,7 @@ Poisson_ratio = 0.3;
 nothing #hide
 ````
 
-Groundwater depth
+Groundwater depth.
 
 ````@example tutorial
 gw_depth = 3.0; # m below ground
@@ -91,16 +91,16 @@ nothing #hide
 ## Derive ``I_{c}``, ``V_{s}`` and ``E_{0}``
 From the correlations published by Roberston and Cabal (2022) and the theory of elasticity, we derive:\
 \
-The soil behaviour type
+The soil behaviour type.
 - ``\small{I_{c} = \sqrt{(3.47 - log_{10}(Q_{t}))^{2} + (log_{10}(F_{r}) + 1.22)^{2}}}``
 
-The shear wave velocity
+The shear wave velocity.
 - ``\small{V_{s} = \sqrt{(\alpha_{vs}\cdot \large\frac{q_{n}}{\small{0.101}})}}``, where ``\alpha_{vs} = 10^{(0.55 Ic + 1.68)}``
 
-The small strain shear modulus
+The small strain shear modulus.
 - ``\small{G_{0} = \frac{\gamma}{9.81} \cdot V_{s}^2}``
 
-The small strain elastic modulus
+The small strain elastic modulus.
 - ``\small{E_{0} = 2(1 + ν)G_{0}}``
 
 ````@example tutorial
@@ -111,9 +111,9 @@ nothing #hide
 ````
 
 ### Linear approximation to ``E_{0}`` with depth
-To assess the intial pile head stiffness, we need to model the soil profile as having a linearly increasing elastic modulus with depth. This is a reasonable approximation for many soil profiles.
+To assess the intial pile head stiffness, we need to model the soil profile as having a linearly increasing elastic modulus with depth. This is a reasonable approximation for many soil profiles, but may not be suitable for some sites.
 
-We obtain a least squares fit to ``E_{0}``
+We obtain a least squares fit to ``E_{0}``.
 
 ````@example tutorial
 fun_E0_linear = prs.get_least_squares_interpolator(depth_m, E0);
@@ -135,27 +135,27 @@ fig2 #hide
 ````
 
 ## Pile load test details
-For this tutorial, we consider a pile load test which was carried out at Mobile, Alabama. The test comprised a 457 mm diameter, 9.5 mm wall, closed-toe, steel-pipe pile driven to 17.0 m below ground and grouted after driving. The pile stick up was approximately 0.9 m above ground.\
+We consider a pile load test which was carried out at Mobile, Alabama. The test comprised a 457 mm diameter, 9.5 mm wall, closed-toe, steel-pipe pile, driven to 17.0 m below ground, and grouted after driving. The pile stick up was approximately 0.9 m above ground.\
 \
 Further details of the test can be found at the website of the test organiser [www.fellenius.net](https://www.fellenius.net/).
 
 ### Pile properties
-The available pile types are listed below
+The available pile types are listed below.
 
 ````@example tutorial
 prs.list_available_pile_types()
 ````
 
-We assign pile type, pile length and pile diameter
+We assign pile type, pile length and pile diameter.
 
 ````@example tutorial
 pile_type = "Driven pile - steel closed ended";
-pile_length = 17.0; # metres
+pile_length = 17.0; # metres below ground
 pile_diameter = 0.457; # metres
 nothing #hide
 ````
 
-The pile elastic modulus, ``E_{pile}``, is caculated for a steel shell, grout filled circular pile
+The pile elastic modulus, ``E_{pile}``, is caculated for a steel shell, grout filled circular pile.
 
 ````@example tutorial
 odiam = 0.457;
@@ -177,10 +177,10 @@ print("Epile = ", Epile_MPa, " MPa")  #hide
 We calculate the pile ultimate load following the approach of Frank (2017).\
 \
 The calculation of pile ultimate resistance relies on several factors which require a soil type.
-Using the assessed ``I_{c}`` value, the soil types required for the assessment are defined in this notebook as follows:
-- ``I_{c} > 2.60`` : Silt and clay (soil type 1).
-- ``2.05 < I_{c} \leq 2.60`` : Intermediate soil (soil type 2).
-- ``I_{c} \leq 2.05`` : Sand (soil type 3).
+Using the assessed ``I_{c}`` value, the soil types required for the assessment are defined here as follows:
+- ``I_{c} > 2.70`` : Silt and clay (soil type 1).
+- ``2.50 < I_{c} \leq 2.70`` : Intermediate soil (soil type 2).
+- ``I_{c} \leq 2.50`` : Sand (soil type 3).
 
 ````@example tutorial
 soil_type_CPT2012 = prs.get_soil_type_CPT2012(Ic);
@@ -189,19 +189,19 @@ nothing #hide
 
 ### Pile ultimate shaft load
 The ultimate shaft resistance for each node along the pile shaft is obtained as follows:
-- ``f_{s} = \alpha\cdot f_{sol}``, with ``f_{sol} \leq f_{smax}``\
+- ``f_{s} = \alpha\cdot f_{sol}``, with ``f_{sol} \leq f_{smax}.``\
 where:
 - ``f_{sol}`` is the unfactored shaft resistance dependent on ``q_{c}`` and soil type.
 - ``\alpha`` is a factor dependent on soil type and pile type.\
 - ``f_{smax}`` is a the limiting shaft resistance dependent on soil type and pile type.
 
-``\alpha`` is shown below for [silt and clay, intermediate soils, sands]
+``\alpha`` is shown below for silt and clay, intermediate soils and sands, respectively.
 
 ````@example tutorial
 prs.get_alpha_shaft_CPT2012()[pile_type]
 ````
 
-``f_{sol}`` is shown below for sands and clays. Note that for intermediate soils the function `get_ultimate_shaft_resistance()` linearly interpolates ``f_{sol}`` between ``I_{c} = 2.05`` (sands) and ``I_{c} = 2.60`` (clays).
+``f_{sol}`` is shown below for sands and clays. Note that for intermediate soils the function `get_ultimate_shaft_resistance()` linearly interpolates ``f_{sol}`` between ``I_{c} = 2.50`` (sands) and ``I_{c} = 2.70`` (clays).
 
 ````@example tutorial
 # Plot fsol curves #hide
@@ -219,14 +219,14 @@ axislegend(ax_fsol, [lsand1, lclay1], ["Sand and gravel", "Clay and silt"], posi
 fig_fsol #hide
 ````
 
-We first calculate the ultimate resistance (MPa) for each node along the pile
+We first calculate the ultimate resistance (MPa) for each node along the pile.
 
 ````@example tutorial
 fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor=1.0);
 nothing #hide
 ````
 
-Then the ultimate shaft load (MN) for the whole pile
+Then the ultimate shaft load (MN) for the whole pile.
 
 ````@example tutorial
 ult_shaft_MN = prs.get_ultimate_shaft_load(depth_m, fshaft_MPa, pile_diameter, pile_length);
@@ -236,23 +236,23 @@ print("The ultimate shaft load is ", round(ult_shaft_MN, digits=3), " (MN)") #hi
 ### Pile ultimate base load
 The ultimate base load is obtained as follows:\
 \
-We obtain the ultimate base resistance (MPa):
+The ultimate base resistance (MPa) is given by:
 - ``f_{b} = k_{c}\cdot q_{ca}``\
 where:
-- ``k_{c}`` is a factor dependent on soil type and pile class\
-- ``q_{ca}`` is the equavalent average cone resistance for the soil within 1.5 diameters above and below the pile base
+- ``k_{c}`` is a factor dependent on soil type and pile class.\
+- ``q_{ca}`` is the equavalent average cone resistance for the soil within 1.5 diameters above and below the pile base.
 
 ````@example tutorial
-qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=false);
+qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=true);
 nothing #hide
 ````
 
 ````@example tutorial
-kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[depth_m.==pile_length]][1];
+kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[argmin(abs.(depth_m .- pile_length))]][1];
 nothing #hide
 ````
 
-Then caculate the ultimate base load (MN)
+We then caculate the ultimate base load (MN).
 
 ````@example tutorial
 fb_MPa = kc_at_base * qc_avg_base;
@@ -272,7 +272,7 @@ print("The predicted pile ultimate load is ", round(pile_ult_load, digits=3), "(
 ````
 
 ## Pile load displacement response
-The pile load displacement response is assessed by first calculating an intitial pile head stiffness based on the theory of elasticity. The reduction in pile head stiffness for increasing load is then obtained by scaling down dependent on the ratio of applied load to ultimate load.
+The pile load displacement response is assessed by first calculating an intitial pile head stiffness based on the theory of elasticity. The reduction in pile head (spring stiffness for increasing load is then obtained by a scaling factor dependent on the ratio of applied load to ultimate load.
 
 The small strain elastic modulus, ``E_{0}``, along the pile shaft is assumed to vary linearly, and the least squares approximation obtained above gives:\
 
@@ -290,18 +290,18 @@ k0 = prs.get_initial_pile_head_stiffness(pile_length, pile_diameter, Epile_MPa, 
 print("k₀ = ", floor(Int64, round(k0)), " MN/m") #hide
 ````
 
-The load displacement curve is derived following a method proposed by Mayne (2001), based on work by Fahey and Carter (1993), which assumes that the pile head stiffness varies as a function of the load ratio ``P/P_{ult}`` as:\
+The load displacement curve is derived following a method proposed by Mayne (2001), based on work by Fahey and Carter (1993), which assumes that the pile head (spring) stiffness varies as a function of the load ratio ``P/P_{ult}`` as:\
 
 - ``k = k_{0} \cdot (1 - (P/P_{ult})^{0.3})``
 
-We specify the pile head loads
+We specify the pile head loads.
 
 ````@example tutorial
 pile_head_loads = 0.01:0.001:0.90*pile_ult_load;
 nothing #hide
 ````
 
-Then calculate the cumulative displacement at each load
+Then calculate the cumulative displacement at each load.
 
 ````@example tutorial
 displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
@@ -311,14 +311,14 @@ nothing #hide
 ### Pile capacity
 The pile capacity is calculated as the load at which the allowable pile head settlement is reached.
 
-Specify the allowable pile head settlement (metres)
+We specify the allowable pile head settlement (metres).
 
 ````@example tutorial
 allowable_pile_head_settlement_m = 0.06;
 nothing #hide
 ````
 
-Then calculate the pile capacity
+Then calculate the pile capacity.
 
 ````@example tutorial
 pile_capacity_MN = pile_head_loads[argmin(abs.(displacement .- allowable_pile_head_settlement_m))];
@@ -355,16 +355,16 @@ pretty_table(
 ````
 
 ## Load carried by pile shaft at capacity
-We can now view the load carried by the pile with depth.\
+We can now plot the load carried by the pile shaft with depth.\
 \
-We set the applied load as the pile capacity
+We set the applied load as the pile capacity.
 
 ````@example tutorial
 applied_load = pile_capacity_MN;
 nothing #hide
 ````
 
-Then calculate the load versus depth
+Then calculate the load versus depth.
 
 ````@example tutorial
 mydepth, myload = prs.get_load_vs_depth(depth_m, qc_MPa, Ic, applied_load, pile_ult_load, pile_length, pile_diameter, pile_type);

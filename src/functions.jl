@@ -191,7 +191,7 @@ end
 Return a vector of soil types (deonted by 1, 2 or 3) for use in CPT2012 capacity assessment:
 
 - 1 = Silts and clays (Ic > 2.70).
-- 2 = Intermediate soil (Ic = 2.05 - 2.60).
+- 2 = Intermediate soil (2.50 < Ic <= 2.70).
 - 3 = Sands (Ic <= 2.50).
 """
 function get_soil_type_CPT2012(Ic::AbstractVector{Float64})
@@ -388,16 +388,16 @@ See also [`get_Ic`](@ref)
 """
 function get_fsol_shaft_CPT2012(qc_MPa::AbstractVector{Float64}, Ic::AbstractVector{Float64})
 
-    ysand = 125 .* (1 .- exp.(-0.13 .* qc_MPa)) # Curve for sands, Ic < 2.05
-    yclay = 138 .* (1 .- exp.(-0.21 .* qc_MPa)) # Curve for silts and clays Ic > 2.60
+    ysand = 125 .* (1 .- exp.(-0.13 .* qc_MPa)) # Curve for sands, Ic < 2.50
+    yclay = 138 .* (1 .- exp.(-0.21 .* qc_MPa)) # Curve for silts and clays Ic > 2.70
 
-    # Clip Ic to between 2.05 and 2.6, with sands below, and silts and clays above
+    # Clip Ic to between 2.50 and 2.70, with sands below, and silts and clays above
     Ic_clipped = Ic[:] # take a copy of Ic
-    Ic_clipped[Ic.<2.05] .= 2.05 # lower (sand) limit
-    Ic_clipped[Ic.>2.60] .= 2.60 # upper (silts and clays) limit
+    Ic_clipped[Ic.<2.50] .= 2.50 # lower (sand) limit
+    Ic_clipped[Ic.>2.70] .= 2.70 # upper (silts and clays) limit
 
     # scaling ratio
-    sand_clay_ratio = (Ic_clipped .- 2.05) ./ 0.55  # 0 for sand 1 for clay
+    sand_clay_ratio = (Ic_clipped .- 2.50) ./ 0.20  # 0 for sand 1 for clay
 
     return (1 .- sand_clay_ratio) .* ysand .+ sand_clay_ratio .* yclay
 end
@@ -552,8 +552,9 @@ end
 """
 	get_bigQtn(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Float64}, fs_MPa::AbstractVector{Float64}, u2_MPa::AbstractVector{Float64}; gw_depth::Float64, gamma::Float64 = 18.0, a::Float64 = 0.73)
 
-Return `Qₜ = (qₜ - σᵥ₀) / 0.101 * (0.101 / σ'ᵥ₀) ^n` where\
-        n = 0.381 * Ic + 0.05 * σ'ᵥ₀ / 0.101 - 0.15.
+Return:
+- `Qₜₙ = (qₜ - σᵥ₀) / 0.101 * (0.101 / σ'ᵥ₀)ⁿ`.
+- where: `n = 0.381 * Ic + 0.05 * σ'ᵥ₀ / 0.101 - 0.15`.
 
 Uses an iterative process.
 
@@ -585,7 +586,7 @@ function get_bigQtn(depth_m::AbstractVector{Float64}, qc_MPa::AbstractVector{Flo
 
         # updated result
         Ic_new = ((3.47 .- log10.(Qtn)) .^ 2 .+ (log10.(Fr) .+ 1.22) .^ 2) .^ 0.5
-        n_new = 0.381 .* Ic_new .+ 0.05 * (p_atm ./ sigmav0effective) .- 0.15
+        n_new = min.(1.0, 0.381 .* Ic_new .+ 0.05 * (sigmav0effective ./ p_atm) .- 0.15)
         Qtn_new = (qt .- sigmav0) ./ p_atm .* (p_atm ./ sigmav0effective) .^ n_new
 
         # check mse on n

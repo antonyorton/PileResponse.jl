@@ -18,6 +18,8 @@ export
     get_E0,
     get_Vs,
     get_Ic,
+    get_Ic_usingQt_only,
+    get_bigQtn,
     get_bigQt,
     get_Fr,
     get_Rf,

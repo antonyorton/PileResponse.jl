@@ -18,6 +18,8 @@
 - [`get_E0`](@ref)
 - [`get_Vs`](@ref)
 - [`get_Ic`](@ref)
+- [`get_Ic_usingQt_only`](@ref)
+- [`get_bigQtn`](@ref)
 - [`get_bigQt`](@ref)
 - [`get_Fr`](@ref)
 - [`get_Rf`](@ref)
@@ -46,6 +48,8 @@ get_average_qc_at_pile_base
 get_E0
 get_Vs
 get_Ic
+get_Ic_usingQt_only
+get_bigQtn
 get_bigQt
 get_Fr
 get_Rf
