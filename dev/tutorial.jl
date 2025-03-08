@@ -144,7 +144,7 @@ soil_type_CPT2012 = prs.get_soil_type_CPT2012(Ic);
 # - ``\alpha`` is a factor dependent on soil type and pile type.\
 # - ``f_{smax}`` is a the limiting shaft resistance dependent on soil type and pile type.
 
-# ``\alpha`` is shown below for [silt and clay, intermediate soils, sands]
+# ``\alpha`` is shown below for [silt and clay, intermediate soils, sands].
 prs.get_alpha_shaft_CPT2012()[pile_type]
 
 # ``f_{sol}`` is shown below for sands and clays. Note that for intermediate soils the function `get_ultimate_shaft_resistance()` linearly interpolates ``f_{sol}`` between ``I_{c} = 2.05`` (sands) and ``I_{c} = 2.60`` (clays).
@@ -163,10 +163,10 @@ lclay1 = lines!(ax_fsol, qcfsol, fsol_clays, color=:Blue) #hide
 axislegend(ax_fsol, [lsand1, lclay1], ["Sand and gravel", "Clay and silt"], position=:lt); #hide
 fig_fsol #hide
 
-# We first calculate the ultimate resistance (MPa) for each node along the pile
+# We first calculate the ultimate resistance (MPa) for each node along the pile.
 fshaft_MPa = prs.get_ultimate_shaft_resistance(qc_MPa, Ic, pile_type, factor=1.0);
 
-# Then the ultimate shaft load (MN) for the whole pile
+# Then the ultimate shaft load (MN) for the whole pile.
 ult_shaft_MN = prs.get_ultimate_shaft_load(depth_m, fshaft_MPa, pile_diameter, pile_length);
 print("The ultimate shaft load is ", round(ult_shaft_MN, digits=3), " (MN)") #hide
 
@@ -176,14 +176,14 @@ print("The ultimate shaft load is ", round(ult_shaft_MN, digits=3), " (MN)") #hi
 # We obtain the ultimate base resistance (MPa):
 # - ``f_{b} = k_{c}\cdot q_{ca}``\
 # where:
-# - ``k_{c}`` is a factor dependent on soil type and pile class\
-# - ``q_{ca}`` is the equavalent average cone resistance for the soil within 1.5 diameters above and below the pile base
+# - ``k_{c}`` is a factor dependent on soil type and pile class.\
+# - ``q_{ca}`` is the equavalent average cone resistance for the soil within 1.5 diameters above and below the pile base.
 
-qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=false);
+qc_avg_base = prs.get_average_qc_at_pile_base(depth_m, qc_MPa, pile_length, pile_diameter, clip_to_30pct=true);
 #
-kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[depth_m.==pile_length]][1];
+kc_at_base = prs.get_kc_base_CPT2012()[pile_type][soil_type_CPT2012[argmin(abs.(depth_m .- pile_length))]][1];
 
-# Then caculate the ultimate base load (MN)
+# Then caculate the ultimate base load (MN).
 
 fb_MPa = kc_at_base * qc_avg_base;
 ult_base_MN = pi * pile_diameter^2 / 4 * fb_MPa;
