@@ -92,7 +92,7 @@ nothing #hide
 From the correlations published by Roberston and Cabal (2022) and the theory of elasticity, we derive:\
 \
 The soil behaviour type.
-- ``\small{I_{c} = \sqrt{(3.47 - log_{10}(Q_{t}))^{2} + (log_{10}(F_{r}) + 1.22)^{2}}}``
+- ``\small{I_{c} = \sqrt{(3.47 - log_{10}(Q_{tn}))^{2} + (log_{10}(F_{r}) + 1.22)^{2}}}``
 
 The shear wave velocity.
 - ``\small{V_{s} = \sqrt{(\alpha_{vs}\cdot \large\frac{q_{n}}{\small{0.101}})}}``, where ``\alpha_{vs} = 10^{(0.55 Ic + 1.68)}``
@@ -272,7 +272,7 @@ print("The predicted pile ultimate load is ", round(pile_ult_load, digits=3), "(
 ````
 
 ## Pile load displacement response
-The pile load displacement response is assessed by first calculating an intitial pile head stiffness based on the theory of elasticity. The reduction in pile head (spring stiffness for increasing load is then obtained by a scaling factor dependent on the ratio of applied load to ultimate load.
+The pile load displacement response is assessed by first calculating an intitial pile head stiffness based on the theory of elasticity. The reduction in pile head (spring) stiffness for increasing load is then obtained by a scaling factor dependent on the ratio of applied load to ultimate load.
 
 The small strain elastic modulus, ``E_{0}``, along the pile shaft is assumed to vary linearly, and the least squares approximation obtained above gives:\
 
@@ -290,18 +290,20 @@ k0 = prs.get_initial_pile_head_stiffness(pile_length, pile_diameter, Epile_MPa, 
 print("k₀ = ", floor(Int64, round(k0)), " MN/m") #hide
 ````
 
-The load displacement curve is derived following a method proposed by Mayne (2001), based on work by Fahey and Carter (1993), which assumes that the pile head (spring) stiffness varies as a function of the load ratio ``P/P_{ult}`` as:\
+The load displacement curve is derived following a method proposed by Mayne (2001), based on work by Fahey and Carter (1993), in which the pile head (spring) stiffness, for a given load ``P`` less than the ultimate load ``P_{ult}``, is approximated as:\
 
 - ``k = k_{0} \cdot (1 - (P/P_{ult})^{0.3})``
 
-We specify the pile head loads.
+Frist, we specify the pile head loads.
 
 ````@example tutorial
 pile_head_loads = 0.01:0.001:0.90*pile_ult_load;
 nothing #hide
 ````
 
-Then calculate the cumulative displacement at each load.
+We then calculate the total pile head displacement for each load as:\
+
+- ``s = \large{\frac{P}{k}}``
 
 ````@example tutorial
 displacement = prs.get_pile_head_displacement(k0, pile_head_loads, pile_ult_load);
@@ -327,6 +329,7 @@ print("The displacement at capacity is ", round(displacement[argmin(abs.(displac
 ````
 
 ### Load displacement curve
+The predicted load displacement response for the pile head is shown in the figure below.
 
 ````@example tutorial
 plot_indicies = pile_head_loads .< pile_capacity_MN #hide
